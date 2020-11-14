@@ -1,0 +1,30 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "6.1.0"
+}
+
+
+def mainClassName = "com.tersesystems.blacklite.reader.BlackliteReader"
+
+jar {
+    manifest {
+        attributes "Main-Class": mainClassName
+    }
+}
+
+task run(type: JavaExec, dependsOn: classes) {
+    main = mainClassName
+    classpath sourceSets.main.runtimeClasspath
+    classpath configurations.runtime
+}
+
+dependencies {
+    // Get rid of some unneeded dependencies here
+    implementation 'org.graylog2.repackaged:natty:0.8-1'
+
+    // Need to use https://picocli.info/picocli-on-graalvm.html
+    implementation 'info.picocli:picocli:4.5.2'
+    annotationProcessor 'info.picocli:picocli-codegen:4.5.2'
+
+    implementation("org.xerial:sqlite-jdbc:3.32.3.2")
+}

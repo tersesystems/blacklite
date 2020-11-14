@@ -1,0 +1,10 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+dependencies {
+    api project(':blacklite-core')
+
+    implementation 'com.github.luben:zstd-jni:1.4.5-6'
+}

@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api project(':blacklite-log4j2')
+
+    api project(':blacklite-codec-zstd')
+
+    // https://mvnrepository.com/artifact/com.vlkan.log4j2/log4j2-logstash-layout
+    testCompile group: 'com.vlkan.log4j2', name: 'log4j2-logstash-layout', version: '1.0.5'
+}

@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+}
+
+sourceSets {
+    jmh {
+        java.srcDirs = ['src/jmh/java']
+        resources.srcDirs = ['src/jmh/resources']
+        compileClasspath += sourceSets.main.runtimeClasspath
+    }
+}
+
+// https://gist.github.com/mrbald/7bbb5113c3164d5243314da8c28649a1
+dependencies {
+    compile project(':blacklite-core')
+    compile project(':blacklite-codec-zstd')
+
+    jmhImplementation 'org.openjdk.jmh:jmh-core:1.23'
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
+
+    // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
+    implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.32.3.2'
+}
+
+task jmh(type: JavaExec, dependsOn: jmhClasses) {
+    main = 'org.openjdk.jmh.Main'
+    classpath = sourceSets.jmh.compileClasspath + sourceSets.jmh.runtimeClasspath
+}
+
+classes.finalizedBy(jmhClasses)

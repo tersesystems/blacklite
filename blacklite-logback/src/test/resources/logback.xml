@@ -1,0 +1,55 @@
+<configuration debug="true">
+
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+        <delay>1000</delay>
+    </shutdownHook>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{H:mm:ss.SSS} [%-5level] %logger{15} - %message%ex%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/tmp/blacklite/entries.json</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        </encoder>
+    </appender>
+
+    <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
+        <url>jdbc:sqlite:/tmp/blacklite/live.db</url>
+
+        <archiver class="com.tersesystems.blacklite.archive.DefaultArchiver">
+            <file>/tmp/blacklite/archive.db</file>
+            <maximumNumRows>10000</maximumNumRows>
+
+            <codec class="com.tersesystems.blacklite.codec.zstd.ZStdCodec">
+                <level>9</level>
+            </codec>
+
+            <rollingStrategy class="com.tersesystems.blacklite.logback.TimeBasedRollingStrategy">
+                <fileNamePattern>/tmp/blacklite/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db</fileNamePattern>
+                <maxHistory>20</maxHistory>
+            </rollingStrategy>
+
+            <!--<rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">-->
+            <!--    <fileNamePattern>/tmp/blacklite/archive-%i.db</fileNamePattern>-->
+            <!--    <minIndex>1</minIndex>-->
+            <!--    <maxIndex>5</maxIndex>-->
+            <!--</rollingStrategy>-->
+
+            <triggeringPolicy class="com.tersesystems.blacklite.archive.ArchiveRowsTriggeringPolicy">
+                <maximumNumRows>500000</maximumNumRows>
+            </triggeringPolicy>
+        </archiver>
+
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        </encoder>
+    </appender>
+
+    <root level="TRACE">
+        <appender-ref ref="BLACKLITE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>

@@ -1,0 +1,37 @@
+pluginManagement {
+    repositories {
+        jcenter()
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+}
+
+rootProject.name = 'blacklite'
+
+def includeProject = { String projectName ->
+    File projectDir = new File(settingsDir, projectName)
+    String buildFileName = "${projectName}.gradle"
+
+    assert projectDir.isDirectory()
+    assert new File(projectDir, buildFileName).isFile()
+
+    include projectName
+    project(":${projectName}").projectDir    = projectDir
+    project(":${projectName}").buildFileName = buildFileName
+}
+
+includeProject 'blacklite-api'
+
+includeProject 'blacklite-codec-zstd'
+
+includeProject 'blacklite-core'
+
+includeProject 'blacklite-logback'
+
+includeProject 'blacklite-log4j2'
+includeProject 'blacklite-log4j2-codec-zstd'
+
+includeProject 'blacklite-reader'
+
+includeProject 'blacklite-benchmarks'
+
+//includeProject 'guide'

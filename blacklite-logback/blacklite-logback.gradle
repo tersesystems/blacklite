@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api project(':blacklite-core')
+
+    api "ch.qos.logback:logback-classic:$logbackVersion"
+
+    testRuntimeOnly project(':blacklite-codec-zstd')
+    testRuntimeOnly 'net.logstash.logback:logstash-logback-encoder:6.4'
+}
