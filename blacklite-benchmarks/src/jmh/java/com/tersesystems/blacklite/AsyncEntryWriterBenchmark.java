@@ -53,15 +53,16 @@ public class AsyncEntryWriterBenchmark {
   public void setUp() throws Exception {
     EntryStoreConfig config = new DefaultEntryStoreConfig();
     final FakeEntryStore fakeEntryStore = new FakeEntryStore();
-    Archiver archiver = new DefaultArchiver() {
-      public boolean shouldArchive() {
-        return false;
-      }
+    Archiver archiver =
+        new DefaultArchiver() {
+          public boolean shouldArchive() {
+            return false;
+          }
 
-      public int archive() {
-        return 0;
-      }
-    };
+          public int archive() {
+            return 0;
+          }
+        };
     this.blacklite =
         new AsyncEntryWriter(StatusReporter.DEFAULT, config, archiver, "rifter-appender") {
           @Override

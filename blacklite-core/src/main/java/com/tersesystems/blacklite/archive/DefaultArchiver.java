@@ -141,12 +141,12 @@ public class DefaultArchiver implements Archiver {
     final Connection connection = entryStore.getConnection();
     if (connection != null) {
       Function codecFunction =
-              new Function() {
-                @Override
-                protected void xFunc() throws SQLException {
-                  result(codec.encode(value_blob(0)));
-                }
-              };
+          new Function() {
+            @Override
+            protected void xFunc() throws SQLException {
+              result(codec.encode(value_blob(0)));
+            }
+          };
       // Register the codec as a custom SQLite function
       Function.create(connection, "encode", codecFunction);
     }

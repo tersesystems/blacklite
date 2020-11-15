@@ -1,5 +1,7 @@
 package com.tersesystems.blacklite.log4j2;
 
+import static java.util.Objects.requireNonNull;
+
 import com.tersesystems.blacklite.archive.DefaultArchiver;
 import com.tersesystems.blacklite.archive.RollingStrategy;
 import com.tersesystems.blacklite.archive.TriggeringPolicy;
@@ -11,8 +13,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
-
-import static java.util.Objects.requireNonNull;
 
 @Plugin(name = "Archiver", category = Core.CATEGORY_NAME, printObject = true)
 public class Log4J2Archiver extends DefaultArchiver {
@@ -35,9 +35,7 @@ public class Log4J2Archiver extends DefaultArchiver {
 
   @PluginFactory
   public static Log4J2Archiver createArchiver(
-      @PluginAttribute("file")
-      @Required(message = "No file provided for Archiver")
-      String file,
+      @PluginAttribute("file") @Required(message = "No file provided for Archiver") String file,
       @PluginAttribute(value = "maximumNumRows", defaultInt = 10000) long maximumNumRows,
       @PluginAttribute(value = "maxBackupIndex", defaultInt = 3) int maxBackupIndex,
       @PluginElement("codec") Codec codec,

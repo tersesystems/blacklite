@@ -102,7 +102,7 @@ and then add the libraries:
 
 ### SBT
 
-```scala
+```sbt
 resolvers += Resolver.bintrayRepo("tersesystems", "maven")
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-logback" % "<latestVersion>"
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-codec-zstd" % "<latestVersion>"
@@ -220,8 +220,53 @@ Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appe
 
 ### Reader
 
+The blacklite reader has a number of command line options:
+
 ```
-java -jar blacklite-reader.jar -c /tmp/blacklite/archive.db
+Usage: blacklite-reader [-chvV] [--binary] [--charset=CHARSET] [-t=<timezone>]
+                        [-w=WHERE] [-a=AFTER | -s=START] [-b=BEFORE | -e=END]
+                        FILE
+Outputs content from blacklite database
+      FILE                one or more files to read
+  -a, --after=AFTER       Only render entries after the given date
+  -b, --before=BEFORE     Only render entries before the given date
+      --binary            Renders content as raw BLOB binary
+  -c, --count             Return a count of entries
+      --charset=CHARSET   Charset (default: utf8)
+  -e, --end=END           Only render entries before the given epoch second
+  -h, --help              display this help message
+  -s, --start=START       Only render entries after the start of given epoch
+                            second
+  -t, --timezone=<timezone>
+                          Use the given timezone for before/after dates
+  -v, --verbose           Print verbose logging
+  -V, --version           display version info
+  -w, --where=WHERE       Custom SQL WHERE clause
+```
+
+You can run it from the command line using the JAR:
+
+```
+java -jar blacklite-reader.jar
+```
+
+but it's probably easier to wrap it in a bash script.
+
+You can use absolute or relative date processing, i.e. "five seconds ago" using [Natty](https://github.com/joestelmach/natty/blob/master/src/test/java/com/joestelmach/natty/DateTest.java):
+
+```
+./blacklite-reader \
+  --after="2020-11-03 19:22:09" \
+  --before="2020-11-03 19:22:11" \
+  --timezone=PST \
+  /tmp/blacklite/archive.2020-11-03-07-22.669.db
+```
+
+You can also extract data using the `binary` flag and redirect to a file, which you can decompress later.
+
+```bash
+./blacklite-reader --binary /tmp/blacklite/archive.db > zarchive.zst
+zstd -d zarchive.zst 
 ```
 
 ## Benchmarks

@@ -1,9 +1,8 @@
 package com.tersesystems.blacklite.log4j2;
 
+import java.time.Instant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.time.Instant;
 
 public class Main {
   private static final Logger logger = LogManager.getLogger(Main.class);

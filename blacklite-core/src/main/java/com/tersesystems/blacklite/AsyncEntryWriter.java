@@ -1,12 +1,11 @@
 package com.tersesystems.blacklite;
 
 import com.tersesystems.blacklite.archive.Archiver;
-import org.jctools.queues.MessagePassingQueue;
-import org.jctools.queues.MpscUnboundedXaddArrayQueue;
-
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import org.jctools.queues.MessagePassingQueue;
+import org.jctools.queues.MpscUnboundedXaddArrayQueue;
 
 public class AsyncEntryWriter extends AbstractEntryWriter {
 
