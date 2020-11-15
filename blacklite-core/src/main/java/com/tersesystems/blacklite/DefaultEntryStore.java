@@ -1,6 +1,8 @@
 package com.tersesystems.blacklite;
 
 import java.sql.*;
+import java.util.Objects;
+
 import org.sqlite.JDBC;
 
 /**
@@ -28,6 +30,8 @@ public class DefaultEntryStore implements EntryStore {
 
   @Override
   public void initialize() throws SQLException {
+    Objects.requireNonNull(conn, "Null connection!");
+
     try (Statement stmt = conn.createStatement()) {
       stmt.execute(Statements.createEntriesTable());
       stmt.execute(Statements.createEntriesView());
