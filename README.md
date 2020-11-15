@@ -2,16 +2,15 @@
 
 Blacklite is an appender that writes to a [SQLite](https://www.sqlite.org/index.html) database
 .  It combines all the advantages of writing to a database with the speed and control of passing
- around a flat file.
+ around a flat file.  Blacklite supports both [Logback](http://logback.qos.ch/) and [Log4J 2](https://logging.apache.org/log4j/2.x/).
 
-* Uses SQLite [memory mapping](https://www.sqlite.org/mmap.html) and batch inserts for maximum
- throughput with minimum latency.
-* Broad support given [Library of Congress approved storage format](https://sqlite.org/locrsf.html
-).
+* SQLite file means [total compatibility](https://sqlite.org/locrsf.html) and support over all plaforms.
+* Uses [memory mapping](https://www.sqlite.org/mmap.html), batch inserts for maximum
+ throughput with minimum latency.  No indexes, no autoincrement fields.
 * Built-in archiving and rollover based on number of rows.
-* Automatic ZStandard [dictionary compression](http://fileformats.archiveteam.org/wiki/Zstandard_dictionary) for 4x disk space savings in archives.
-* Database reader to search logs from command line by "natural language" date ranges and 
-[JSON](https://www.sqlite.org/json1.html).
+* Automatic ZStandard dictionary training and compression for 4x disk space savings in archives.
+* `blacklite-core` module allows direct entry writing with no logging framework needed. 
+* Database reader to search logs from command line by "natural language" date ranges.
 
 Blacklite is designed for ubiquitous logging and "logging-aware" applications: 
 
@@ -25,15 +24,205 @@ In addition, providing data in SQLite format means you can leverage tools built 
 * [Datasette](https://docs.datasette.io/en/stable/): Exposing SQLite files as web applications
 * [Observable HQ](https://observablehq.com/@mbostock/sqlite): Using SQLite data in visualization notebooks
 
-For more details on how to query in SQLite, please see the [SQLite page](SQLITE.md).
+More details on [querying SQLite using Python and sqlite3 here](SQLITE.md).
 
 ## Installation
 
-XXX TODO
+### Gradle
+
+Add the following resolver:
+
+```
+repositories {
+    maven {
+        url  "https://dl.bintray.com/tersesystems/maven" 
+    }
+}
+```
+
+And then add the libraries and codecs that you want:
+
+```
+implementation 'com.tersesystems.blacklite:blacklite-logback:<latestVersion>'
+implementation 'com.tersesystems.blacklite:blacklite-codec-zstd:<latestVersion>'
+```
+
+or 
+
+```
+implementation 'com.tersesystems.blacklite:blacklite-log4j2:<latestVersion>'
+implementation 'com.tersesystems.blacklite:blacklite-codec-zstd:<latestVersion>'
+```
+
+### Maven
+
+Add the `tersesystems-maven` repository to `settings.xml`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<settings xsi:schemaLocation='http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd'
+          xmlns='http://maven.apache.org/SETTINGS/1.0.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+
+    <profiles>
+        <profile>
+            <repositories>
+                <repository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>bintray-tersesystems-maven</id>
+                    <name>bintray</name>
+                    <url>https://dl.bintray.com/tersesystems/maven</url>
+                </repository>
+            </repositories>
+            <id>bintray</id>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>bintray</activeProfile>
+    </activeProfiles>
+</settings>
+```
+
+and then add the libraries:
+
+```
+<dependency>
+  <groupId>com.tersesystems.blacklite</groupId>
+  <artifactId>blacklite-logback</artifactId>
+  <version>$latestVersion</version>
+</dependency>
+
+<dependency>
+  <groupId>com.tersesystems.blacklite</groupId>
+  <artifactId>blacklite-codec-zstd</artifactId>
+  <version>$latestVersion</version>
+</dependency>
+```
+
+### SBT
+
+```scala
+resolvers += Resolver.bintrayRepo("tersesystems", "maven")
+libraryDependencies += "com.tersesystems.blacklite" % "blacklite-logback" % "<latestVersion>"
+libraryDependencies += "com.tersesystems.blacklite" % "blacklite-codec-zstd" % "<latestVersion>"
+```
 
 ## Configuration
 
-XXX TODO
+Configuration is straightforward.  The archiver can be a bit complicated, but it works much the same way that rolling file appenders do.
+
+### Logback
+
+The logback appender uses [JCTools](https://jctools.github.io/JCTools/) internally as an asynchronous queue.  This means you don't need to use an `AsyncAppender` on top.
+
+You should always use a `shutdownHook` to allow Logback to drain the queue before exiting.
+ 
+```xml
+<configuration>
+
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+        <delay>1000</delay>
+    </shutdownHook>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{H:mm:ss.SSS} [%-5level] %logger{15} - %message%ex%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/tmp/blacklite/entries.json</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        </encoder>
+    </appender>
+
+    <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
+        <url>jdbc:sqlite:/tmp/blacklite/live.db</url>
+
+        <archiver class="com.tersesystems.blacklite.archive.DefaultArchiver">
+            <file>/tmp/blacklite/archive.db</file>
+            <maximumNumRows>10000</maximumNumRows>
+
+            <codec class="com.tersesystems.blacklite.codec.zstd.ZStdCodec">
+                <level>9</level>
+            </codec>
+
+            <rollingStrategy class="com.tersesystems.blacklite.logback.TimeBasedRollingStrategy">
+                <fileNamePattern>/tmp/blacklite/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db</fileNamePattern>
+                <maxHistory>20</maxHistory>
+            </rollingStrategy>
+            
+            <triggeringPolicy class="com.tersesystems.blacklite.archive.ArchiveRowsTriggeringPolicy">
+                <maximumNumRows>500000</maximumNumRows>
+            </triggeringPolicy>
+        </archiver>
+
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        </encoder>
+    </appender>
+
+    <root level="TRACE">
+        <appender-ref ref="BLACKLITE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>
+```
+
+### Log4J 2
+
+Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appender:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO" packages="com.tersesystems.blacklite.log4j2,com.tersesystems.blacklite.log4j2.zstd">
+    <appenders>
+        <Blacklite name="Blacklite">
+            <url>jdbc:sqlite:/${sys:java.io.tmpdir}/blacklite/log4j.db</url>
+
+            <!-- https://mvnrepository.com/artifact/com.vlkan.log4j2/log4j2-logstash-layout -->
+            <LogstashLayout dateTimeFormatPattern="yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZ"
+                            eventTemplateUri="classpath:LogstashJsonEventLayoutV1.json"
+                            prettyPrintEnabled="false"/>
+
+            <Archiver file="/tmp/blacklite/archive.db">
+                <ZStdDictCodec>
+                    <level>3</level>
+                    <sampleSize>102400000</sampleSize>
+                    <dictSize>10485760</dictSize>
+                    <!-- <FileRepository file="${sys:java.io.tmpdir}/blacklite/dictionary"/> -->
+                    <SqliteRepository url="jdbc:sqlite:${sys:java.io.tmpdir}/blacklite/dict.db"/>
+                </ZStdDictCodec>
+
+                <FixedWindowRollingStrategy
+                        min="1"
+                        max="5"
+                        filePattern="${sys:java.io.tmpdir}/blacklite/archive-%i.db"/>
+                <ArchiveRowsTriggeringPolicy>
+                    <maximumNumRows>100000</maximumNumRows>
+                </ArchiveRowsTriggeringPolicy>
+            </Archiver>
+        </Blacklite>
+
+        <Async name="AsyncBlacklite">
+            <AppenderRef ref="Blacklite"/>
+            <JCToolsBlockingQueue/>
+        </Async>
+    </appenders>
+    <Loggers>
+        <Root level="DEBUG">
+            <AppenderRef ref="AsyncBlacklite"/>
+        </Root>
+    </Loggers>
+</Configuration>
+```
+
+### Reader
+
+```
+java -jar blacklite-reader.jar -c /tmp/blacklite/archive.db
+```
 
 ## Benchmarks
 

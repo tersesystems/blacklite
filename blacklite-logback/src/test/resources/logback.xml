@@ -32,12 +32,6 @@
                 <maxHistory>20</maxHistory>
             </rollingStrategy>
 
-            <!--<rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">-->
-            <!--    <fileNamePattern>/tmp/blacklite/archive-%i.db</fileNamePattern>-->
-            <!--    <minIndex>1</minIndex>-->
-            <!--    <maxIndex>5</maxIndex>-->
-            <!--</rollingStrategy>-->
-
             <triggeringPolicy class="com.tersesystems.blacklite.archive.ArchiveRowsTriggeringPolicy">
                 <maximumNumRows>500000</maximumNumRows>
             </triggeringPolicy>
