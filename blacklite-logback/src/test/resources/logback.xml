@@ -17,26 +17,20 @@
     </appender>
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-        <url>jdbc:sqlite:/tmp/blacklite/live.db</url>
+        <url>jdbc:sqlite:/tmp/blacklite-logback/live.db</url>
 
         <archiver class="com.tersesystems.blacklite.archive.DefaultArchiver">
-            <file>/tmp/blacklite/archive.db</file>
-            <maximumNumRows>10000</maximumNumRows>
+            <file>/tmp/blacklite-logback/archive.db</file>
+            <archiveAfterRows>10000</archiveAfterRows>
 
             <codec class="com.tersesystems.blacklite.codec.zstd.ZStdCodec">
                 <level>9</level>
             </codec>
 
             <rollingStrategy class="com.tersesystems.blacklite.logback.TimeBasedRollingStrategy">
-                <fileNamePattern>/tmp/blacklite/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db</fileNamePattern>
+                <fileNamePattern>/tmp/blacklite-logback/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db</fileNamePattern>
                 <maxHistory>20</maxHistory>
             </rollingStrategy>
-
-            <!--<rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">-->
-            <!--    <fileNamePattern>/tmp/blacklite/archive-%i.db</fileNamePattern>-->
-            <!--    <minIndex>1</minIndex>-->
-            <!--    <maxIndex>5</maxIndex>-->
-            <!--</rollingStrategy>-->
 
             <triggeringPolicy class="com.tersesystems.blacklite.archive.ArchiveRowsTriggeringPolicy">
                 <maximumNumRows>500000</maximumNumRows>

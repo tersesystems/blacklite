@@ -15,8 +15,6 @@ public class ArchiveRowsTriggeringPolicy implements TriggeringPolicy {
         if (rs.next()) {
           final long size = rs.getLong(1);
           result = size > getMaximumNumRows();
-          System.out.printf(
-              "isTriggered: size = %s, max = %s, result = %s\n", size, getMaximumNumRows(), result);
         }
       }
     } catch (SQLException e) {

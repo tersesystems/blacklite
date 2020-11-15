@@ -18,8 +18,10 @@ public class DefaultArchiver implements Archiver {
 
   private String file;
   private Properties properties = archiveSqliteConfig().toProperties();
-  private long maximumNumRows = 10000;
-  private int maxBackupIndex;
+
+  // Maximum number of rows that is allowed in the main live database. */
+  private long archiveAfterRows = 10000;
+
   private Codec codec = new IdentityCodec();
   private EntryStore entryStore;
   private StatusReporter statusReporter;
@@ -43,20 +45,12 @@ public class DefaultArchiver implements Archiver {
     this.properties = properties;
   }
 
-  public long getMaximumNumRows() {
-    return maximumNumRows;
+  public long getArchiveAfterRows() {
+    return archiveAfterRows;
   }
 
-  public void setMaximumNumRows(long maximumNumRows) {
-    this.maximumNumRows = maximumNumRows;
-  }
-
-  public int getMaxBackupIndex() {
-    return maxBackupIndex;
-  }
-
-  public void setMaxBackupIndex(int maxBackupIndex) {
-    this.maxBackupIndex = maxBackupIndex;
+  public void setArchiveAfterRows(long archiveAfterRows) {
+    this.archiveAfterRows = archiveAfterRows;
   }
 
   @Override
@@ -107,7 +101,7 @@ public class DefaultArchiver implements Archiver {
   /** Returns true if archiving should happen, otherwise false. */
   boolean shouldArchive(Connection conn) throws SQLException {
     long numRows = numRows(conn);
-    return numRows > getMaximumNumRows();
+    return numRows > getArchiveAfterRows();
   }
 
   long numRows(Connection conn) throws SQLException {
@@ -141,12 +135,12 @@ public class DefaultArchiver implements Archiver {
     final Connection connection = entryStore.getConnection();
     if (connection != null) {
       Function codecFunction =
-              new Function() {
-                @Override
-                protected void xFunc() throws SQLException {
-                  result(codec.encode(value_blob(0)));
-                }
-              };
+          new Function() {
+            @Override
+            protected void xFunc() throws SQLException {
+              result(codec.encode(value_blob(0)));
+            }
+          };
       // Register the codec as a custom SQLite function
       Function.create(connection, "encode", codecFunction);
     }
@@ -164,8 +158,12 @@ public class DefaultArchiver implements Archiver {
    */
   int archive(Connection conn) throws SQLException {
     // XXX Better logic that can be driven by configuration here.
+
+    // This is the number of rows to leave in the live database (not archived or encoded)
+    final long archiveAfterRows = getArchiveAfterRows();
+
     long maxRowId = findMaxRowId(conn);
-    long rowId = maxRowId - getMaximumNumRows();
+    long rowId = maxRowId - archiveAfterRows;
 
     String file = getFile();
     if (file == null) {
@@ -259,5 +257,28 @@ public class DefaultArchiver implements Archiver {
 
   public void setTriggeringPolicy(TriggeringPolicy triggeringPolicy) {
     this.triggeringPolicy = triggeringPolicy;
+  }
+
+  @Override
+  public String toString() {
+    return "DefaultArchiver{"
+        + "file='"
+        + file
+        + '\''
+        + ", properties="
+        + properties
+        + ", maximumNumRows="
+        + archiveAfterRows
+        + ", codec="
+        + codec
+        + ", entryStore="
+        + entryStore
+        + ", statusReporter="
+        + statusReporter
+        + ", rollingStrategy="
+        + rollingStrategy
+        + ", triggeringPolicy="
+        + triggeringPolicy
+        + '}';
   }
 }

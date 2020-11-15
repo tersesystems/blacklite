@@ -1,24 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO" packages="com.tersesystems.blacklite.log4j2">
     <appenders>
-        <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-        </Console>
-
         <Blacklite name="Blacklite">
-            <url>jdbc:sqlite:/${sys:java.io.tmpdir}/blacklite/log4j.db</url>
+            <url>jdbc:sqlite:/${sys:java.io.tmpdir}/blacklite-log4j2/live.db</url>
 
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
 
-            <Archiver file="${sys:java.io.tmpdir}/blacklite/archive.db">
-                <FixedWindowRollingStrategy filePattern="${sys:java.io.tmpdir}/blacklite/archive-%i.db"/>
-                <ArchiveRowsTriggeringPolicy/>
+            <Archiver file="${sys:java.io.tmpdir}/blacklite/archive.db" archiveAfterRows="10000">
+                <FixedWindowRollingStrategy
+                        filePattern="${sys:java.io.tmpdir}/blacklite-log4j2/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db"/>
+                <ArchiveRowsTriggeringPolicy>
+                    <maximumNumRows>500000</maximumNumRows>
+                </ArchiveRowsTriggeringPolicy>
             </Archiver>
         </Blacklite>
 
         <Async name="AsyncBlacklite">
             <AppenderRef ref="Blacklite"/>
-
             <!-- Use MPSCArrayQueue -->
             <JCToolsBlockingQueue/>
         </Async>

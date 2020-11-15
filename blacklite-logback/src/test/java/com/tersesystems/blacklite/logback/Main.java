@@ -1,5 +1,8 @@
 package com.tersesystems.blacklite.logback;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +11,9 @@ public class Main {
 
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) throws InterruptedException, IOException {
+    Files.createDirectories(Paths.get("/tmp/blacklite-logback"));
+
     System.out.println("START " + Instant.now());
     Thread.sleep(1000L);
 

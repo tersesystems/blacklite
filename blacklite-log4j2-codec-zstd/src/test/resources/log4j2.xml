@@ -27,7 +27,7 @@
                         max="5"
                         filePattern="${sys:java.io.tmpdir}/blacklite/archive-%i.db"/>
                 <ArchiveRowsTriggeringPolicy>
-                    <maximumNumRows>100000</maximumNumRows>
+                    <maximumNumRows>500000</maximumNumRows>
                 </ArchiveRowsTriggeringPolicy>
             </Archiver>
         </Blacklite>

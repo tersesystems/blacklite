@@ -15,7 +15,7 @@ public class Log4JZStdCodec extends ZStdCodec {
 
   @PluginFactory
   public static Log4JZStdCodec createCodec(
-          @PluginAttribute(value = "level", defaultInt = 3) int level) {
+      @PluginAttribute(value = "level", defaultInt = 3) int level) {
     return new Log4JZStdCodec(level);
   }
 }
