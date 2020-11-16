@@ -67,8 +67,10 @@ class QueryBuilder {
   String createSQL() {
     StringBuilder sb = new StringBuilder();
     if (count) {
-      // SQLite does a full table scan for count, so use MAX(_rowid_) instead
-      sb.append("SELECT MAX(_rowid_) FROM entries");
+      // SQLite does a full table scan for count.  We'd like to use
+      // MAX(_rowid_) but that's not enough to cover the custom
+      // WHERE clause case.
+      sb.append("SELECT COUNT(*) FROM entries");
     } else {
       sb.append("SELECT content FROM entries");
     }

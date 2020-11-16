@@ -64,11 +64,14 @@ public class Log4JBlackliteAppender extends AbstractAppender {
 
     EntryStoreConfig config = new DefaultEntryStoreConfig();
 
-    config.setUrl(url);
+    // Recover if we get something that is just a raw file or URL string
+    String fullUrl = url.startsWith("jdbc:sqlite:") ? url : "jdbc:sqlite:" + url;
+    config.setUrl(fullUrl);
     config.setBatchInsertSize(batchInsertSize);
     // XXX Fill this out
     // Properties properties = new Properties();
     // config.setProperties(properties);
+    LOGGER.info("Connecting with config " + config);
 
     boolean ignoreExceptions = true;
     Property[] properties = {};

@@ -1,6 +1,10 @@
 package com.tersesystems.blacklite.logback;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.encoder.Encoder;
 import com.tersesystems.blacklite.*;
@@ -10,12 +14,12 @@ import java.util.Properties;
 
 /** A logback appender using blacklite as a backend. */
 public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
-    implements EntryStoreConfig {
+    implements EntryStoreConfig, LoggerContextListener {
   private final EntryStoreConfig config = new DefaultEntryStoreConfig();
 
   private Encoder<ILoggingEvent> encoder;
   private EntryWriter entryWriter;
-  private Archiver archiver = new DefaultArchiver();
+  private Archiver archiver;
 
   public Encoder<ILoggingEvent> getEncoder() {
     return encoder;
@@ -25,9 +29,22 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     this.encoder = encoder;
   }
 
-  public void start() {
+  public synchronized void start() {
+    if (isStarted()) {
+      return;
+    }
+
     try {
       StatusReporter statusReporter = new LogbackStatusReporter(this);
+
+      // Recover if we get something that is just a raw file or URL string
+      String url = config.getUrl();
+      if (!url.startsWith("jdbc:sqlite:")) {
+        url = "jdbc:sqlite:" + url;
+      }
+      config.setUrl(url);
+      addInfo("Connecting with config " + config);
+      this.archiver = new DefaultArchiver();
       this.entryWriter = new AsyncEntryWriter(statusReporter, config, archiver, name);
 
       super.start();
@@ -38,13 +55,13 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   }
 
   @Override
-  public void stop() {
-    super.stop();
-    try {
-      entryWriter.close();
-    } catch (Exception e) {
-      addError("Stopping threads", e);
+  public synchronized void stop() {
+    if (!isStarted()) {
+      return;
     }
+
+    close();
+    super.stop();
   }
 
   @Override
@@ -96,4 +113,40 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   public void setArchiver(Archiver archiver) {
     this.archiver = archiver;
   }
+
+  void close() {
+    try {
+      addInfo("Closing entryWriter " + entryWriter);
+      entryWriter.close();
+      addInfo("Closed entryWriter " + entryWriter);
+      archiver = null;
+      entryWriter = null;
+    } catch (Exception e) {
+      addError("Stopping threads", e);
+    }
+  }
+
+  @Override
+  public boolean isResetResistant() {
+    return false;
+  }
+
+  @Override
+  public void onStart(LoggerContext context) {
+    addInfo("onStart");
+  }
+
+  @Override
+  public void onReset(LoggerContext context) {
+    addInfo("onReset() method called [" + this + "]");
+    close();
+  }
+
+  @Override
+  public void onStop(LoggerContext context) {
+    addInfo("onStop");
+  }
+
+  @Override
+  public void onLevelChange(Logger logger, Level level) {}
 }

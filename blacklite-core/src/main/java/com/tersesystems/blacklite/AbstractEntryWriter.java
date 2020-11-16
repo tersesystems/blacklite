@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /** The main rifter action. */
 public abstract class AbstractEntryWriter implements EntryWriter {
-
-  protected final ExecutorService executor;
   protected final ArchiveTask archiveTask;
   protected final StatusReporter statusReporter;
   protected final long batchInsertSize;
@@ -28,15 +26,6 @@ public abstract class AbstractEntryWriter implements EntryWriter {
     this.statusReporter = statusReporter;
     this.batchInsertSize = config.getBatchInsertSize();
 
-    this.executor =
-        Executors.newSingleThreadExecutor(
-            r1 -> {
-              Thread t1 = new Thread(r1);
-              t1.setDaemon(true);
-              t1.setName(name + "-executor-thread");
-              return t1;
-            });
-
     this.entryStore = createEntryStore(config);
     archiver.setEntryStore(entryStore);
 
@@ -52,39 +41,6 @@ public abstract class AbstractEntryWriter implements EntryWriter {
 
   protected boolean acceptingWrites() {
     return enabled.get();
-  }
-
-  @Override
-  public void close() throws Exception {
-    // Reject any additional inserts.
-    enabled.set(false);
-
-    // Force a commit.
-    CompletableFuture.runAsync(
-            () -> {
-              try {
-                entryStore.executeBatch();
-              } catch (SQLException e) {
-                statusReporter.addError(e.getMessage(), e);
-              }
-            },
-            executor)
-        .get();
-
-    // Run the archive task before shutdown.
-    CompletableFuture.runAsync(archiveTask, executor).get();
-
-    // Shutdown the executor
-    executor.shutdown();
-    boolean shutdownBeforeTimeout = executor.awaitTermination(100L, TimeUnit.SECONDS);
-    if (!shutdownBeforeTimeout) {
-      // THIS IS BAD but I'm not sure we can do anything about it...
-      statusReporter.addWarn("Executor timed out before shutdown!");
-    }
-
-    // Finally, close everything out.
-    entryStore.close();
-    archiveTask.close();
   }
 
   protected static class ArchiveTask implements Runnable {

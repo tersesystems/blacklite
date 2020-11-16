@@ -2,12 +2,18 @@ package com.tersesystems.blacklite;
 
 import com.tersesystems.blacklite.archive.Archiver;
 import java.sql.SQLException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
 
 public class AsyncEntryWriter extends AbstractEntryWriter {
+
+  protected final ExecutorService executor;
 
   private final MessagePassingQueue<Entry> queue;
 
@@ -21,6 +27,15 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
     // XXX should talk to @forked_franz about ideal chunk size?
     queue = new MpscUnboundedXaddArrayQueue<>(4096);
 
+    this.executor =
+        Executors.newSingleThreadExecutor(
+            r1 -> {
+              Thread t1 = new Thread(r1);
+              t1.setDaemon(true);
+              t1.setName(name + "-executor-thread");
+              return t1;
+            });
+
     executor.execute(
         () -> {
           final AtomicLong inserts = new AtomicLong(0);
@@ -28,9 +43,10 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
           MessagePassingQueue.WaitStrategy waitStrategy =
               idleCounter -> {
                 try {
-                  // Nothing happening right now, try a batch
+                  // Nothing happening right now, try a batch commit
                   if (inserts.get() > 0) {
                     entryStore.executeBatch();
+                    entryStore.commit();
                     inserts.set(0);
                   }
 
@@ -72,5 +88,38 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
     if (!queue.relaxedOffer(new Entry(-1, epochSeconds, nanos, level, content))) {
       statusReporter.addError("Could not accept entry!");
     }
+  }
+
+  @Override
+  public void close() throws Exception {
+    // Reject any additional inserts.
+    enabled.set(false);
+
+    // Force a commit.
+    CompletableFuture.runAsync(
+            () -> {
+              try {
+                entryStore.executeBatch();
+              } catch (SQLException e) {
+                statusReporter.addError(e.getMessage(), e);
+              }
+            },
+            executor)
+        .get();
+
+    // Run the archive task before shutdown.
+    CompletableFuture.runAsync(archiveTask, executor).get();
+
+    // Shutdown the executor
+    executor.shutdown();
+    boolean shutdownBeforeTimeout = executor.awaitTermination(100L, TimeUnit.SECONDS);
+    if (!shutdownBeforeTimeout) {
+      // THIS IS BAD but I'm not sure we can do anything about it...
+      statusReporter.addWarn("Executor timed out before shutdown!");
+    }
+
+    // Finally, close everything out.
+    entryStore.close();
+    archiveTask.close();
   }
 }

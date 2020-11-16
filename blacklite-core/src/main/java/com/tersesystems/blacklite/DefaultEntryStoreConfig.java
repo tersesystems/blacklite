@@ -5,7 +5,7 @@ import org.sqlite.SQLiteConfig;
 
 public class DefaultEntryStoreConfig implements EntryStoreConfig {
 
-  private String url = "jdbc:sqlite:blacklite.db";
+  private String url = "file:blacklite.db";
   private Properties properties = liveConfig().toProperties();
   private long batchInsertSize = 1000;
 

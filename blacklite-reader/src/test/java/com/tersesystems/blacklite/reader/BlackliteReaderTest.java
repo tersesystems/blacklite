@@ -131,7 +131,7 @@ public class BlackliteReaderTest {
     final String sql = actual.createSQL();
     assertThat(sql)
         .isEqualTo(
-            "SELECT MAX(_rowid_) FROM entries WHERE  timestamp < ?  AND  timestamp > ?  AND level > 9000");
+            "SELECT COUNT(*) FROM entries WHERE  timestamp < ?  AND  timestamp > ?  AND level > 9000");
   }
 
   static class TestBlackliteReader extends BlackliteReader {

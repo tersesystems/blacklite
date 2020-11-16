@@ -273,7 +273,7 @@ Outputs content from blacklite database
 You can run it from the command line using the JAR:
 
 ```
-java -jar blacklite-reader.jar
+java -jar blacklite-reader-0.1.1-all.jar --help
 ```
 
 but it's probably easier to wrap it in a bash script.

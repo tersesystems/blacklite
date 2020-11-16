@@ -1,8 +1,6 @@
 package com.tersesystems.blacklite;
 
 import java.sql.*;
-import java.util.Objects;
-
 import org.sqlite.JDBC;
 
 /**
@@ -25,13 +23,14 @@ public class DefaultEntryStore implements EntryStore {
   private long totalBytes;
 
   public DefaultEntryStore(EntryStoreConfig config) throws SQLException {
+    if (!JDBC.isValidURL(config.getUrl())) {
+      throw new IllegalArgumentException("Invalid URL " + config.getUrl());
+    }
     this.conn = JDBC.createConnection(config.getUrl(), config.getProperties());
   }
 
   @Override
   public void initialize() throws SQLException {
-    Objects.requireNonNull(conn, "Null connection!");
-
     try (Statement stmt = conn.createStatement()) {
       stmt.execute(Statements.createEntriesTable());
       stmt.execute(Statements.createEntriesView());
