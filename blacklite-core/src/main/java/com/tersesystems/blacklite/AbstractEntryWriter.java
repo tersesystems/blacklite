@@ -52,12 +52,10 @@ public abstract class AbstractEntryWriter implements EntryWriter {
 
     @Override
     public void run() {
-      if (archiver.shouldArchive()) {
-        archiver.archive();
-      }
+      archiver.archive();
     }
 
-    public void close() {
+    public void close() throws Exception {
       archiver.close();
     }
   }

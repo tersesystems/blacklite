@@ -14,9 +14,10 @@ import org.sqlite.JDBC;
  * small enough to fit entirely in memory.
  */
 public class DefaultEntryStore implements EntryStore {
-  public static int APPLICATION_ID = 0xF1F70000;
+  public static int APPLICATION_ID = 0xB1AC3117;
 
   private final Connection conn;
+  private final String url;
   private PreparedStatement insertStatement;
 
   private long totalInserts;
@@ -26,24 +27,25 @@ public class DefaultEntryStore implements EntryStore {
     if (!JDBC.isValidURL(config.getUrl())) {
       throw new IllegalArgumentException("Invalid URL " + config.getUrl());
     }
+    this.url = config.getUrl();
     this.conn = JDBC.createConnection(config.getUrl(), config.getProperties());
   }
 
   @Override
   public void initialize() throws SQLException {
     try (Statement stmt = conn.createStatement()) {
-      stmt.execute(Statements.createEntriesTable());
-      stmt.execute(Statements.createEntriesView());
+      stmt.execute(Statements.instance().createEntriesTable());
+      stmt.execute(Statements.instance().createEntriesView());
     }
-    this.insertStatement = conn.prepareStatement(Statements.insert());
+    this.insertStatement = conn.prepareStatement(Statements.instance().insert());
 
     // Set to transaction mode after setting up DDL.
     conn.setAutoCommit(false);
   }
 
   @Override
-  public Connection getConnection() {
-    return conn;
+  public String getUrl() {
+    return url;
   }
 
   @Override
@@ -74,6 +76,8 @@ public class DefaultEntryStore implements EntryStore {
 
   @Override
   public void close() throws Exception {
+    executeBatch();
+    commit();
     insertStatement.close();
     vacuum();
     conn.close();

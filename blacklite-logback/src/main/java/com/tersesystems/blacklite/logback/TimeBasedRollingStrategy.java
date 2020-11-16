@@ -36,6 +36,39 @@ public class TimeBasedRollingStrategy extends ContextAwareBase
   private FileSize totalSizeCap = new FileSize(UNBOUNDED_TOTAL_SIZE_CAP);
   private volatile boolean started;
 
+  public int getMaxHistory() {
+    return maxHistory;
+  }
+
+  public void setMaxHistory(int maxHistory) {
+    this.maxHistory = maxHistory;
+  }
+
+  public boolean isCleanHistoryOnStart() {
+    return cleanHistoryOnStart;
+  }
+
+  public void setCleanHistoryOnStart(boolean cleanHistoryOnStart) {
+    this.cleanHistoryOnStart = cleanHistoryOnStart;
+  }
+
+  public void setTotalSizeCap(FileSize totalSizeCap) {
+    addInfo("setting totalSizeCap to " + totalSizeCap.toString());
+    this.totalSizeCap = totalSizeCap;
+  }
+
+  public void setParent(Archiver archiver) {
+    this.archiver = archiver;
+  }
+
+  public String getParentsRawFileProperty() {
+    return archiver.getFile();
+  }
+
+  public void setFileNamePattern(String fileNamePatternStr) {
+    this.fileNamePatternStr = fileNamePatternStr;
+  }
+
   @Override
   public void start() {
     renameUtil.setContext(this.context);
@@ -84,6 +117,12 @@ public class TimeBasedRollingStrategy extends ContextAwareBase
 
   @Override
   public void rollover(Archiver archiver) {
+    String msg =
+        String.format(
+            "rollover: maxHistory = %d, cleanHistoryOnStart = %s, totalSizeCap = %s",
+            maxHistory, cleanHistoryOnStart, totalSizeCap);
+    addInfo(msg);
+
     String elapsedPeriodsFileName = getElapsedPeriodsFileName();
     if (archiver != null) {
       renameUtil.rename(archiver.getFile(), elapsedPeriodsFileName);
@@ -93,39 +132,6 @@ public class TimeBasedRollingStrategy extends ContextAwareBase
       Date now = new Date(getCurrentTime());
       this.cleanUpFuture = archiveRemover.cleanAsynchronously(now);
     }
-  }
-
-  public int getMaxHistory() {
-    return maxHistory;
-  }
-
-  public void setMaxHistory(int maxHistory) {
-    this.maxHistory = maxHistory;
-  }
-
-  public boolean isCleanHistoryOnStart() {
-    return cleanHistoryOnStart;
-  }
-
-  public void setCleanHistoryOnStart(boolean cleanHistoryOnStart) {
-    this.cleanHistoryOnStart = cleanHistoryOnStart;
-  }
-
-  public void setTotalSizeCap(FileSize totalSizeCap) {
-    addInfo("setting totalSizeCap to " + totalSizeCap.toString());
-    this.totalSizeCap = totalSizeCap;
-  }
-
-  public void setParent(Archiver archiver) {
-    this.archiver = archiver;
-  }
-
-  public String getParentsRawFileProperty() {
-    return archiver.getFile();
-  }
-
-  public void setFileNamePattern(String fileNamePatternStr) {
-    this.fileNamePatternStr = fileNamePatternStr;
   }
 
   public long getCurrentTime() {

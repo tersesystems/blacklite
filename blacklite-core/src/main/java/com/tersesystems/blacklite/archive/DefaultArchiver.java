@@ -1,5 +1,7 @@
 package com.tersesystems.blacklite.archive;
 
+import static com.tersesystems.blacklite.DefaultEntryStore.APPLICATION_ID;
+
 import com.tersesystems.blacklite.EntryStore;
 import com.tersesystems.blacklite.Statements;
 import com.tersesystems.blacklite.StatusReporter;
@@ -23,6 +25,7 @@ public class DefaultArchiver implements Archiver {
   private long archiveAfterRows = 10000;
 
   private Codec codec = new IdentityCodec();
+
   private EntryStore entryStore;
   private StatusReporter statusReporter;
 
@@ -74,38 +77,46 @@ public class DefaultArchiver implements Archiver {
   }
 
   @Override
-  public boolean shouldArchive() {
-    try {
-      return shouldArchive(entryStore.getConnection());
-    } catch (SQLException e) {
-      statusReporter.addError(e.getMessage(), e);
-      return false;
-    }
-  }
-
-  @Override
   public int archive() {
-    try {
-      return archive(entryStore.getConnection());
+    // For some reason, we can't see the inserted statements unless we open up a new
+    // connection, probably transaction related.
+    // Opening up a new connection is very lightweight in SQLite, and given that this
+    // should only be happening once a second, it's not a huge load.
+    try (Connection conn = JDBC.createConnection(entryStore.getUrl(), getProperties())) {
+      Function codecFunction =
+          new Function() {
+            @Override
+            protected void xFunc() throws SQLException {
+              result(codec.encode(value_blob(0)));
+            }
+          };
+      // Register the codec as a custom SQLite function
+      Function.create(conn, "encode", codecFunction);
+      conn.setAutoCommit(false);
+      if (shouldArchive(conn)) {
+        return archive(conn);
+      }
     } catch (SQLException e) {
       statusReporter.addError(e.getMessage(), e);
-      return 0;
     }
+    return 0;
   }
 
   @Override
-  public void close() {
+  public void close() throws Exception {
     codec.close();
   }
 
   /** Returns true if archiving should happen, otherwise false. */
   boolean shouldArchive(Connection conn) throws SQLException {
-    long numRows = numRows(conn);
-    return numRows > getArchiveAfterRows();
+    final long numRows = numRows(conn);
+    final long archiveAfterRows = getArchiveAfterRows();
+    boolean result = numRows > archiveAfterRows;
+    return result;
   }
 
   long numRows(Connection conn) throws SQLException {
-    try (PreparedStatement ps = conn.prepareStatement(Statements.numRows())) {
+    try (PreparedStatement ps = conn.prepareStatement(statements().numRows())) {
       ResultSet rs = ps.executeQuery();
       if (rs.next()) {
         return rs.getLong(1);
@@ -116,7 +127,7 @@ public class DefaultArchiver implements Archiver {
   }
 
   long findMaxRowId(Connection conn) throws SQLException {
-    try (PreparedStatement ps = conn.prepareStatement(Statements.selectMaxRowId())) {
+    try (PreparedStatement ps = conn.prepareStatement(statements().selectMaxRowId())) {
       final ResultSet rs = ps.executeQuery();
       if (rs.next()) {
         return rs.getLong(1);
@@ -130,21 +141,6 @@ public class DefaultArchiver implements Archiver {
   public void initialize(StatusReporter statusReporter) throws SQLException {
     Objects.requireNonNull(codec, "Null codec");
     codec.initialize(statusReporter);
-
-    // Slight cheat here for benchmarking with a null entry store...
-    final Connection connection = entryStore.getConnection();
-    if (connection != null) {
-      Function codecFunction =
-          new Function() {
-            @Override
-            protected void xFunc() throws SQLException {
-              result(codec.encode(value_blob(0)));
-            }
-          };
-      // Register the codec as a custom SQLite function
-      Function.create(connection, "encode", codecFunction);
-    }
-
     this.statusReporter = statusReporter;
   }
 
@@ -178,8 +174,8 @@ public class DefaultArchiver implements Archiver {
     String archiveUrl = "jdbc:sqlite:" + archivePath.toString();
     try (Connection archiveConn = JDBC.createConnection(archiveUrl, getProperties())) {
       try (Statement stmt = archiveConn.createStatement()) {
-        stmt.execute(Statements.createEntriesTable());
-        stmt.execute(Statements.createEntriesView());
+        stmt.execute(statements().createEntriesTable());
+        stmt.execute(statements().createEntriesView());
       }
     }
 
@@ -187,25 +183,24 @@ public class DefaultArchiver implements Archiver {
     boolean success = false;
     try {
       try (Statement st = conn.createStatement()) {
-        String attach = String.format(Statements.attachFormat(), archivePath.toString());
+        String attach = String.format(statements().attachFormat(), archivePath.toString());
         st.execute(attach);
       }
 
       // Insert from LIVE to ARCHIVE using custom SQL encode function here.
       // Delete from LIVE using the same critera.
-      try (PreparedStatement insertStatement = conn.prepareStatement(Statements.archive())) {
+      try (PreparedStatement insertStatement = conn.prepareStatement(statements().archive())) {
         insertStatement.setLong(1, rowId);
         inserted = insertStatement.executeUpdate();
       }
 
       int deleted = 0;
       try (PreparedStatement deleteStatement =
-          conn.prepareStatement(Statements.deleteLessThanRowId())) {
+          conn.prepareStatement(statements().deleteLessThanRowId())) {
         deleteStatement.setLong(1, rowId);
         deleted = deleteStatement.executeUpdate();
       }
-      // System.out.printf("inserted = %s, deleted = %s, maxRowId = %s, rowId = %s%n", inserted,
-      // deleted, maxRowId, rowId);
+      // statusReporter.addInfo(String.format("Archived %s rows to %s", inserted, archivePath));
 
       if (inserted != deleted) {
         String msg =
@@ -229,15 +224,20 @@ public class DefaultArchiver implements Archiver {
       else conn.rollback();
 
       try (Statement st = conn.createStatement()) {
-        st.execute(Statements.detach());
+        st.execute(statements().detach());
       }
     }
 
     return inserted;
   }
 
+  private Statements statements() {
+    return Statements.instance();
+  }
+
   SQLiteConfig archiveSqliteConfig() {
     SQLiteConfig config = new SQLiteConfig();
+    config.setApplicationId(APPLICATION_ID);
     config.setPageSize(4096);
     config.setEncoding(SQLiteConfig.Encoding.UTF8);
     return config;

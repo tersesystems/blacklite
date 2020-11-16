@@ -16,13 +16,11 @@ public interface Archiver extends AutoCloseable {
 
   void setEntryStore(EntryStore entryStore);
 
-  boolean shouldArchive();
-
   String getFile();
 
   int archive();
 
-  void close();
+  void close() throws Exception;
 
   void initialize(StatusReporter statusReporter) throws SQLException;
 }

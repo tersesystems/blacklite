@@ -10,7 +10,7 @@ public class ArchiveRowsTriggeringPolicy implements TriggeringPolicy {
   @Override
   public boolean isTriggered(Connection conn) {
     boolean result = false;
-    try (PreparedStatement st = conn.prepareStatement(Statements.archiveNumRows())) {
+    try (PreparedStatement st = conn.prepareStatement(statements().archiveNumRows())) {
       try (ResultSet rs = st.executeQuery()) {
         if (rs.next()) {
           final long size = rs.getLong(1);
@@ -21,6 +21,10 @@ public class ArchiveRowsTriggeringPolicy implements TriggeringPolicy {
       e.printStackTrace();
     }
     return result;
+  }
+
+  private Statements statements() {
+    return Statements.instance();
   }
 
   public long getMaximumNumRows() {

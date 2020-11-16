@@ -1,6 +1,5 @@
 package com.tersesystems.blacklite;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 public interface EntryStore extends AutoCloseable {
@@ -14,5 +13,5 @@ public interface EntryStore extends AutoCloseable {
 
   void initialize() throws SQLException;
 
-  Connection getConnection();
+  String getUrl();
 }

@@ -9,7 +9,7 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.encoder.Encoder;
 import com.tersesystems.blacklite.*;
 import com.tersesystems.blacklite.archive.Archiver;
-import com.tersesystems.blacklite.archive.DefaultArchiver;
+import com.tersesystems.blacklite.archive.NoOpArchiver;
 import java.util.Properties;
 
 /** A logback appender using blacklite as a backend. */
@@ -44,7 +44,9 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
       }
       config.setUrl(url);
       addInfo("Connecting with config " + config);
-      this.archiver = new DefaultArchiver();
+      if (this.archiver == null) {
+        this.archiver = new NoOpArchiver();
+      }
       this.entryWriter = new AsyncEntryWriter(statusReporter, config, archiver, name);
 
       super.start();

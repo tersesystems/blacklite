@@ -16,7 +16,7 @@ public class ZStdDictCodecTest {
     File file = new File(classLoader.getResource("message.json").getFile());
     final byte[] bytes = Files.readAllBytes(file.toPath());
     ZStdDictSqliteRepository repo = new ZStdDictSqliteRepository();
-    repo.setUrl("jdbc:sqlite:");
+    repo.setFile("jdbc:sqlite:");
     repo.initialize();
     //      ZstdDictSqliteRepository dictRepository =
     //          new ZstdDictSqliteRepository(StatusReporter.DEFAULT, repo, directoryPath);

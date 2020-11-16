@@ -103,7 +103,7 @@ public class FixedWindowRollingStrategy extends ContextAwareBase
 
   @Override
   public void rollover(Archiver archiver) throws RolloverFailure {
-    addInfo("rollover: enter");
+    addInfo(String.format("rollover: enter minIndex = %d maxIndex = %d", minIndex, maxIndex));
 
     // Inside this method it is guaranteed that the hereto active log file is
     // closed.
@@ -113,7 +113,7 @@ public class FixedWindowRollingStrategy extends ContextAwareBase
       File file = new File(fileNamePattern.convertInt(maxIndex));
 
       if (file.exists()) {
-        addInfo("rollover: deleting file " + file);
+        addInfo("rollover: deleting oldest file " + file);
         file.delete();
       }
 
@@ -121,15 +121,20 @@ public class FixedWindowRollingStrategy extends ContextAwareBase
       for (int i = maxIndex - 1; i >= minIndex; i--) {
         String toRenameStr = fileNamePattern.convertInt(i);
         File toRename = new File(toRenameStr);
-        // no point in trying to rename an inexistent file
+        // no point in trying to rename an  non-existent file
         if (toRename.exists()) {
-          util.rename(toRenameStr, fileNamePattern.convertInt(i + 1));
+          final String s = fileNamePattern.convertInt(i + 1);
+          addInfo(String.format("rollover: renaming %s to %s", toRenameStr, s));
+          util.rename(toRenameStr, s);
         } else {
-          addInfo("Skipping roll-over for inexistent file " + toRenameStr);
+          addInfo("rollover: Skipping roll-over for non-existent file " + toRenameStr);
         }
       }
 
-      util.rename(archiver.getFile(), fileNamePattern.convertInt(minIndex));
+      String minFilename = fileNamePattern.convertInt(minIndex);
+      addInfo(
+          String.format("rollover: finally renaming %s to %s", archiver.getFile(), minFilename));
+      util.rename(archiver.getFile(), minFilename);
     }
   }
 

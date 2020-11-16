@@ -5,6 +5,7 @@ import static com.tersesystems.blacklite.DefaultEntryStore.APPLICATION_ID;
 import com.github.luben.zstd.Zstd;
 import com.tersesystems.blacklite.codec.CodecException;
 import java.sql.*;
+import java.util.Objects;
 import java.util.Optional;
 import org.sqlite.JDBC;
 import org.sqlite.SQLiteConfig;
@@ -16,10 +17,12 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
   public static int CODEC_DB_ID = 3;
   private SQLiteConnection conn;
 
-  private String url;
+  private String file;
 
   public void initialize() throws CodecException {
+    Objects.requireNonNull(file, "null file");
     try {
+      String url = (file.startsWith("jdbc:sqlite:")) ? file : "jdbc:sqlite:" + file;
       this.conn = JDBC.createConnection(url, sqliteConfig().toProperties());
       this.conn.setAutoCommit(false);
       createDDL();
@@ -28,12 +31,12 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
     }
   }
 
-  public String getUrl() {
-    return url;
+  public String getFile() {
+    return file;
   }
 
-  public void setUrl(String url) {
-    this.url = url;
+  public void setFile(String file) {
+    this.file = file;
   }
 
   @Override

@@ -15,6 +15,8 @@ import org.assertj.db.type.Table;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sqlite.JDBC;
+import org.sqlite.SQLiteConfig;
 
 public class DefaultEntryStoreTest {
 
@@ -70,13 +72,15 @@ public class DefaultEntryStoreTest {
     repo.insert(instant.getEpochSecond(), instant.getNano(), level, content);
     repo.insert(instant.getEpochSecond(), instant.getNano(), level, content);
     repo.executeBatch();
+    repo.commit();
 
-    final long maxRowId = getMaxRow();
-    assertThat(maxRowId).isEqualTo(3);
+    try (Connection connection = JDBC.createConnection(url, new SQLiteConfig().toProperties())) {
+      final long maxRowId = getMaxRow(connection);
+      assertThat(maxRowId).isEqualTo(3);
+    }
   }
 
-  long getMaxRow() throws SQLException {
-    final Connection connection = repo.getConnection();
+  long getMaxRow(Connection connection) throws SQLException {
     try (Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT MAX(_rowid_) FROM entries"); ) {
       rs.next();

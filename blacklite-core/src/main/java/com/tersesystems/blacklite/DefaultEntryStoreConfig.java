@@ -1,5 +1,7 @@
 package com.tersesystems.blacklite;
 
+import static com.tersesystems.blacklite.DefaultEntryStore.APPLICATION_ID;
+
 import java.util.Properties;
 import org.sqlite.SQLiteConfig;
 
@@ -49,8 +51,7 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
     // https://www.deconstructconf.com/2019/dan-luu-files
 
     SQLiteConfig config = new SQLiteConfig();
-    // config.setApplicationId(APPLICATION_ID);
-    // config.setUserVersion(LIVE_DB);
+    config.setApplicationId(APPLICATION_ID);
     config.setPageSize(4096);
 
     // Mandate UTF8 for general hygiene

@@ -1,8 +1,7 @@
 package com.tersesystems.blacklite;
 
 import com.tersesystems.blacklite.archive.Archiver;
-import com.tersesystems.blacklite.archive.DefaultArchiver;
-import java.sql.Connection;
+import com.tersesystems.blacklite.archive.NoOpArchiver;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +40,7 @@ public class BlockingEntryWriterBenchmark {
     public void initialize() throws SQLException {}
 
     @Override
-    public Connection getConnection() {
+    public String getUrl() {
       return null;
     }
 
@@ -53,16 +52,7 @@ public class BlockingEntryWriterBenchmark {
   public void setUp() throws Exception {
     EntryStoreConfig config = new DefaultEntryStoreConfig();
     final FakeEntryStore fakeEntryStore = new FakeEntryStore();
-    Archiver archiver =
-        new DefaultArchiver() {
-          public boolean shouldArchive() {
-            return false;
-          }
-
-          public int archive() {
-            return 0;
-          }
-        };
+    Archiver archiver = new NoOpArchiver();
     this.blacklite =
         new BlockingEntryWriter(StatusReporter.DEFAULT, config, archiver, "rifter-appender") {
           @Override

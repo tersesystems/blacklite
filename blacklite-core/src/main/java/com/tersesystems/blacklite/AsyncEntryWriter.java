@@ -2,7 +2,6 @@ package com.tersesystems.blacklite;
 
 import com.tersesystems.blacklite.archive.Archiver;
 import java.sql.SQLException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +24,9 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
     // https://vmlens.com/articles/scale/scalability_queue/
     // https://twitter.com/forked_franz/status/1228773808317792256?lang=en
     // XXX should talk to @forked_franz about ideal chunk size?
+    // with archiving especially, this can get very large.
     queue = new MpscUnboundedXaddArrayQueue<>(4096);
+    // queue = new MpscArrayQueue<>(65536);
 
     this.executor =
         Executors.newSingleThreadExecutor(
@@ -39,19 +40,27 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
     executor.execute(
         () -> {
           final AtomicLong inserts = new AtomicLong(0);
-
+          final AtomicLong lastRun = new AtomicLong(System.nanoTime());
           MessagePassingQueue.WaitStrategy waitStrategy =
               idleCounter -> {
                 try {
                   // Nothing happening right now, try a batch commit
                   if (inserts.get() > 0) {
+                    // statusReporter.addInfo(
+                    //    "AsyncEntryWriter: idle counter "
+                    //        + idleCounter
+                    //        + ", committing "
+                    //        + inserts.get());
                     entryStore.executeBatch();
                     entryStore.commit();
                     inserts.set(0);
                   }
 
-                  if (idleCounter > 10) {
+                  // If it's been idle for a while, run the archive task.
+                  // XXX this should also run at set intervals if a deadline is exceeded.
+                  if (lastRun.get() < System.nanoTime() - 1_000_000_000) {
                     archiveTask.run();
+                    lastRun.set(System.nanoTime());
                     return 0;
                   }
 
@@ -95,31 +104,22 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
     // Reject any additional inserts.
     enabled.set(false);
 
-    // Force a commit.
-    CompletableFuture.runAsync(
-            () -> {
-              try {
-                entryStore.executeBatch();
-              } catch (SQLException e) {
-                statusReporter.addError(e.getMessage(), e);
-              }
-            },
-            executor)
-        .get();
+    executor.submit(
+        () -> {
+          try {
+            entryStore.close();
+            archiveTask.run();
+            archiveTask.close();
+          } catch (Exception e) {
+            statusReporter.addError("Shutdown", e);
+          } finally {
+            executor.shutdown();
+          }
+        });
 
-    // Run the archive task before shutdown.
-    CompletableFuture.runAsync(archiveTask, executor).get();
-
-    // Shutdown the executor
-    executor.shutdown();
-    boolean shutdownBeforeTimeout = executor.awaitTermination(100L, TimeUnit.SECONDS);
-    if (!shutdownBeforeTimeout) {
-      // THIS IS BAD but I'm not sure we can do anything about it...
-      statusReporter.addWarn("Executor timed out before shutdown!");
+    // Give the executor a second to commit and close out cleanly...
+    if (!executor.awaitTermination(1L, TimeUnit.SECONDS)) {
+      statusReporter.addError("Timeout exceeded when closing executor!");
     }
-
-    // Finally, close everything out.
-    entryStore.close();
-    archiveTask.close();
   }
 }

@@ -9,7 +9,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 @Plugin(name = "SqliteRepository", category = Core.CATEGORY_NAME, printObject = true)
 public class Log4JDictSqliteRepository extends ZStdDictSqliteRepository {
   Log4JDictSqliteRepository(String url) {
-    setUrl(url);
+    setFile(url);
   }
 
   @PluginFactory

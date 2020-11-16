@@ -11,6 +11,13 @@ allprojects {
     }
 }
 
+spotless {
+    freshmark {
+        target '*.md'
+        propertiesFile('spotless.properties')
+    }
+}
+
 subprojects { subproj ->
     apply plugin: 'java'
     apply plugin: 'com.diffplug.spotless'

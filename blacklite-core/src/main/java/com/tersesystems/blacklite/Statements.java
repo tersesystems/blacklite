@@ -3,58 +3,69 @@ package com.tersesystems.blacklite;
 import java.util.ResourceBundle;
 
 public final class Statements {
-  private static final ResourceBundle bundle =
-      ResourceBundle.getBundle(Statements.class.getPackage().getName() + ".resources");
 
-  public static String createEntriesTable() {
+  // Don't allow bundle to be defined statically, as it messes up class init if
+  // those class resources aren't found.
+  private final ResourceBundle bundle =
+      ResourceBundle.getBundle(this.getClass().getPackage().getName() + ".resources");
+
+  private static class SingletonHolder {
+    static final Statements INSTANCE = new Statements();
+  }
+
+  public static Statements instance() {
+    return SingletonHolder.INSTANCE;
+  }
+
+  public String createEntriesTable() {
     return bundle.getString("entries.create.statement");
   }
 
-  public static String selectDatabaseSize() {
+  public String selectDatabaseSize() {
     return bundle.getString("entries.dbsize.statement");
   }
 
-  public static String insert() {
+  public String insert() {
     return bundle.getString("entries.insert.statement");
   }
 
-  public static String selectMaxRowId() {
+  public String selectMaxRowId() {
     return bundle.getString("entries.maxrow.statement");
   }
 
-  public static String oldest() {
+  public String oldest() {
     return bundle.getString("entries.oldest.statement");
   }
 
-  public static String databaseSizeStatement() {
+  public String databaseSizeStatement() {
     return bundle.getString("entries.dbsize.statement");
   }
 
-  public static String numRows() {
+  public String numRows() {
     return bundle.getString("entries.numrows.statement");
   }
 
-  public static String archiveNumRows() {
+  public String archiveNumRows() {
     return bundle.getString("entries.archive.numrows.statement");
   }
 
-  public static String createEntriesView() {
+  public String createEntriesView() {
     return bundle.getString("entries_view.create.statement");
   }
 
-  public static String archive() {
+  public String archive() {
     return bundle.getString("entries.archive.statement");
   }
 
-  public static String deleteLessThanRowId() {
+  public String deleteLessThanRowId() {
     return bundle.getString("entries.deletelessthan.statement");
   }
 
-  public static String attachFormat() {
+  public String attachFormat() {
     return bundle.getString("entries.attach.statement");
   }
 
-  public static String detach() {
+  public String detach() {
     return bundle.getString("entries.detach.statement");
   }
 }

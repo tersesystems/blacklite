@@ -68,8 +68,6 @@ public class Log4JBlackliteAppender extends AbstractAppender {
     String fullUrl = url.startsWith("jdbc:sqlite:") ? url : "jdbc:sqlite:" + url;
     config.setUrl(fullUrl);
     config.setBatchInsertSize(batchInsertSize);
-    // XXX Fill this out
-    // Properties properties = new Properties();
     // config.setProperties(properties);
     LOGGER.info("Connecting with config " + config);
 

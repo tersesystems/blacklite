@@ -1,5 +1,21 @@
 # Blacklite
 
+<!---freshmark shields
+output = [
+	link(shield('Bintray', 'bintray', 'tersesystems:blacklite', 'blue'), 'https://bintray.com/tersesystems/maven/blacklite/view'),
+	link(shield('Latest version', 'latest', '{{latestVersion}}', 'blue'), 'https://github.com/tersesystems/blacklite/releases/latest'),
+	link(shield('License Apache-2.0', 'license', 'Apache-2.0', 'blue'), 'https://www.tldrlegal.com/l/apache2'),
+	'',
+	link(image('Travis CI', 'https://travis-ci.org/tersesystems/blacklite.svg?branch=master'), 'https://travis-ci.org/tersesystems/blacklite')
+	].join('\n')
+-->
+[![Bintray](https://img.shields.io/badge/bintray-tersesystems%3Ablacklite-blue.svg)](https://bintray.com/tersesystems/maven/blacklite/view)
+[![Latest version](https://img.shields.io/badge/latest-0.1.0-blue.svg)](https://github.com/tersesystems/blacklite/releases/latest)
+[![License Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://www.tldrlegal.com/l/apache2)
+
+[![Travis CI](https://travis-ci.org/tersesystems/blacklite.svg?branch=master)](https://travis-ci.org/tersesystems/blacklite)
+<!---freshmark /shields -->
+
 Blacklite is an appender that writes to a [SQLite](https://www.sqlite.org/index.html) database.
 It combines all the advantages of writing to a database with the speed and control of passing
 around a flat file.  Blacklite supports both [Logback](http://logback.qos.ch/) and 
@@ -41,18 +57,20 @@ repositories {
 }
 ```
 
-And then add the libraries and codecs that you want:
+And then add the libraries and codecs that you want.
+
+For logback:
 
 ```
 implementation 'com.tersesystems.blacklite:blacklite-logback:<latestVersion>'
 implementation 'com.tersesystems.blacklite:blacklite-codec-zstd:<latestVersion>'
 ```
 
-or 
+or for log4j:
 
 ```
 implementation 'com.tersesystems.blacklite:blacklite-log4j2:<latestVersion>'
-implementation 'com.tersesystems.blacklite:blacklite-codec-zstd:<latestVersion>'
+implementation 'com.tersesystems.blacklite:blacklite-log4j2-codec-zstd:<latestVersion>'
 ```
 
 ### Maven
@@ -85,9 +103,11 @@ Add the `tersesystems-maven` repository to `settings.xml`:
 </settings>
 ```
 
-and then add the libraries:
+and then add the libraries.
 
-```
+For logback:
+
+```xml
 <dependency>
   <groupId>com.tersesystems.blacklite</groupId>
   <artifactId>blacklite-logback</artifactId>
@@ -101,6 +121,22 @@ and then add the libraries:
 </dependency>
 ```
 
+or log4j:
+
+```xml
+<dependency>
+  <groupId>com.tersesystems.blacklite</groupId>
+  <artifactId>blacklite-log4j</artifactId>
+  <version>$latestVersion</version>
+</dependency>
+
+<dependency>
+  <groupId>com.tersesystems.blacklite</groupId>
+  <artifactId>blacklite-log4j2-codec-zstd</artifactId>
+  <version>$latestVersion</version>
+</dependency>
+```
+
 ### SBT
 
 SBT installation is fairly straightforward.
@@ -109,6 +145,10 @@ SBT installation is fairly straightforward.
 resolvers += Resolver.bintrayRepo("tersesystems", "maven")
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-logback" % "<latestVersion>"
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-codec-zstd" % "<latestVersion>"
+
+// or log4j
+//libraryDependencies += "com.tersesystems.blacklite" % "blacklite-log4j" % "<latestVersion>"
+//libraryDependencies += "com.tersesystems.blacklite" % "blacklite-log4j2-codec-zstd" % "<latestVersion>"
 ```
 
 ## Configuration
@@ -116,27 +156,12 @@ libraryDependencies += "com.tersesystems.blacklite" % "blacklite-codec-zstd" % "
 Configuration is straightforward.  The archiver can be a bit complicated, but it works much the same way that rolling file appenders do.
 
 The archiver has a `archiveAfterRows` property that is the maximum number of rows in the live database.  When the maximum number of rows 
-is reached, the oldest rows will be moved into the sqlite.db archive specified by the `file` property.
+is reached, the oldest rows will be moved into the  archive specified by the `file` property.  A codec compression can be
+applied when rows are moved into the archive to save on disk space.
 
 The archive file will be rolled over when the triggering policy is matched.  In the case of the `ArchiveRowsTriggeringPolicy`, 
 this is the maximum number of rows in the archive database -- after that, the archive database will be renamed according to
 the rolling strategy and another archive file will be created.
-
-The archiver can take a codec.  If using dictionary compression, it's `ZStdDictCodec` and the dictionary must be defined 
-in a repository.
-
-There are two repositories for dictionaries: `FileRepository` which points directly to a zstandard dictionary on the
-filesystem, and `SqliteRepository` which keeps dictionaries in an sqlite database.
-
-```
-<ZStdDictCodec>
-    <level>3</level>
-    <sampleSize>102400000</sampleSize>
-    <dictSize>10485760</dictSize>
-    <!-- <FileRepository file="${sys:java.io.tmpdir}/blacklite/dictionary"/> -->
-    <SqliteRepository url="jdbc:sqlite:${sys:java.io.tmpdir}/blacklite/dict.db"/>
-</ZStdDictCodec>
-```
 
 ### Logback
 
@@ -175,7 +200,7 @@ You should always use a `shutdownHook` to allow Logback to drain the queue befor
             </codec>
 
             <rollingStrategy class="com.tersesystems.blacklite.logback.TimeBasedRollingStrategy">
-                <fileNamePattern>/tmp/blacklite/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db</fileNamePattern>
+                <fileNamePattern>logs/archive.%d{yyyyMMdd'T'hhmm,utc}.db</fileNamePattern>
                 <maxHistory>20</maxHistory>
             </rollingStrategy>
             
@@ -194,6 +219,76 @@ You should always use a `shutdownHook` to allow Logback to drain the queue befor
     </root>
 
 </configuration>
+```
+
+#### Codec
+
+The archiver can take a codec.  This compresses the content of the bytes produced by the encoder.  This can be [very effective](COMPRESSION.md).
+
+```xml
+<codec class="com.tersesystems.blacklite.codec.zstd.ZStdCodec">
+    <level>9</level>
+</codec>
+```
+
+If using dictionary compression, it's `ZStdDictCodec` and the dictionary must be defined in a repository.  
+
+There are two repositories for dictionaries: `ZstdDictFileRepository` which points directly to a zstandard
+ dictionary on the filesystem, and `SqliteRepository` which keeps dictionaries in an sqlite database.
+ 
+Blacklite will automatically train a dictionary from the incoming content if it does not exist.  You can
+tweak the dictionary parameters, but the defaults work fine.
+
+```xml
+<codec class="com.tersesystems.blacklite.codec.zstd.ZstdDictCodec">
+<level>9</level>
+  <repository class="com.tersesystems.blacklite.codec.zstd.ZstdDictFileRepository">
+    <file>logs/dictionary</file>
+  </repository>
+</codec>
+```
+
+You can also specify a SQLite database containing dictionaries, using the zstandard dictionary ids as a lookup.  This lets you use multiple dictionaries.
+
+```xml
+<repository class="com.tersesystems.blacklite.codec.zstd.ZStdDictSqliteRepository">
+  <file>logs/dictionary.db</file>
+</repository>
+```
+
+Be aware that if you use a zstandard dictionary, you must have it available to read the logs.  If you lose it, the logs will be unreadable!
+
+#### Rolling Strategy
+
+Fixed Window Rolling Strategy will set up a number of SQLite archive databases, using `%i` to indicate the index.
+
+```xml
+<rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">
+  <fileNamePattern>logs/archive.%i.db</fileNamePattern>
+  <minIndex>1</minIndex>
+  <maxIndex>10</maxIndex>
+</rollingStrategy>
+```
+
+Time Based Rolling Strategy uses a date system, which will roll over renaming the file to the given date.
+
+```xml
+<rollingStrategy class="com.tersesystems.blacklite.logback.TimeBasedRollingStrategy">
+  <fileNamePattern>logs/archive.%d{yyyyMMdd'T'hhmm,utc}.db</fileNamePattern>
+  <maxHistory>20</maxHistory>
+  <totalSizeCap>10M</totalSizeCap>
+  <cleanHistoryOnStartup>true</cleanHistoryOnStartup>
+</rollingStrategy>
+```
+
+#### Triggering Policy
+
+There is one triggering policy, using the maximum number of rows in the archive.
+
+```xml
+<triggeringPolicy class="com.tersesystems.blacklite.archive.ArchiveRowsTriggeringPolicy">
+    <maximumNumRows>500000</maximumNumRows>
+</triggeringPolicy>
 ```
 
 ### Log4J 2
@@ -244,7 +339,37 @@ Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appe
 </Configuration>
 ```
 
+It is broadly similar to the Logback system.
+
 ### Reader
+
+There's a command line blacklite reader that can return the contents given parameters.
+
+You can run it from the command line using the JAR:
+
+```
+export BLACKLITE_VERSION=0.1.0-SNAPSHOT
+java -jar $HOME/.m2/repository/com/tersesystems/blacklite/blacklite-reader/$BLACKLITE_VERSION/blacklite-reader-$BLACKLITE_VERSION-all.jar $*;
+```
+
+but it's probably easier to wrap it in a bash script, like `blacklite-reader`.
+
+```
+$ blacklite-reader live.db
+```
+
+which then renders the contents:
+
+```json
+{"@timestamp":"2020-11-18T19:46:58.111-08:00","@version":"1","message":"Module execution: 2042ms","logger_name":"com.google.inject.internal.util.Stopwatch","thread_name":"main","level":"DEBUG","level_value":10000,"application.home":"/home/wsargent/work/memalloctest/target/universal/stage"}
+```
+
+You can also render the count:
+
+```
+$ blacklite-reader -c live.db
+126
+```
 
 The blacklite reader has a number of command line options:
 
@@ -269,14 +394,6 @@ Outputs content from blacklite database
   -V, --version           display version info
   -w, --where=WHERE       Custom SQL WHERE clause
 ```
-
-You can run it from the command line using the JAR:
-
-```
-java -jar blacklite-reader-0.1.1-all.jar --help
-```
-
-but it's probably easier to wrap it in a bash script.
 
 You can use absolute or relative date processing, i.e. "five seconds ago" using [Natty](https://github.com/joestelmach/natty/blob/master/src/test/java/com/joestelmach/natty/DateTest.java):
 
@@ -322,40 +439,3 @@ Note also that benchmarking can vary considerably depending on your hardware, an
 writes may be different given a 250 MB/sec SSD available to a cloud instance.  If you're writing more 
 log entries than your IO throughput then memory mapping can offload some of it, but at some point you
 will saturate something and God's Own Backpressure will be applied.
-
-### Compression
-
-Blacklite provides a codec for [zstandard](https://facebook.github.io/zstd/), using the [zstd-jni](https://github.com/luben/zstd-jni) library. which is extremely fast and can be tweaked to be
- competitive with LZ4 using "negative" compression levels like "-4".  
-
-In addition, the archiver also includes a [dictionary compression](https://facebook.github.io/zstd/#small-data) option.  If a dictionary is found, then the archiver will write the compressed
- content to the archive file.  If no dictionary is found, the archiver will feed a dictionary using the incoming log entries, then switch over to dictionary compression once the dictionary has been
-  trained.
-  
-Using a dictionary provides both speed and size improvements.  An entry that is typically 185 bytes with JSON can shrink down to as few as 32 bytes.  This adds up extremely quickly when you start
- working with larger log files.
- 
-This is all very abstract, so here's a real life example using 2,001,000 log entries with the logstash logback encoder writing out JSON.
-
-For the unencoded content:
-
-```
-❱ ls -lh rifter.json
--rw-rw-r-- 1 wsargent wsargent 431M Oct 18 14:14 rifter.json
-```
-
-Compare with the encoded SQLite database using dictionary compression:
-
-```
-❱ ls -lh archive.db
--rw-rw-r-- 1 wsargent wsargent 177M Oct 18 14:14 archive.db
-```
-
-But still have the same number of records:
-
-```
-❱ sqlite3 archive.db  "select count(*) from entries"
-2001000
-❱ wc rifter.json
-  2001000   6002000 451212069 rifter.json
-```
