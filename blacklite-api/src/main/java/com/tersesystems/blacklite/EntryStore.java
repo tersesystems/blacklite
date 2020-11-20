@@ -3,6 +3,9 @@ package com.tersesystems.blacklite;
 import java.sql.SQLException;
 
 public interface EntryStore extends AutoCloseable {
+
+  int APPLICATION_ID = 0xB1AC3117;
+
   void insert(long epochSecond, int nanos, int level, byte[] content) throws SQLException;
 
   void vacuum() throws SQLException;

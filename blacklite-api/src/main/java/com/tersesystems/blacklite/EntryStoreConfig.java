@@ -3,9 +3,9 @@ package com.tersesystems.blacklite;
 import java.util.Properties;
 
 public interface EntryStoreConfig {
-  String getUrl();
+  String getFile();
 
-  void setUrl(String url);
+  void setFile(String file);
 
   Properties getProperties();
 

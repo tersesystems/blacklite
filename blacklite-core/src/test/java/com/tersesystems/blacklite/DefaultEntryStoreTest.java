@@ -20,17 +20,17 @@ import org.sqlite.SQLiteConfig;
 
 public class DefaultEntryStoreTest {
 
-  String url;
+  String file;
   EntryStore repo;
 
   @BeforeEach
   public void beforeEach() throws IOException, SQLException {
     Path tmpDir = Files.createTempDirectory("livedb");
     String filePath = tmpDir.resolve("livedb.db").toAbsolutePath().toString();
-    url = "jdbc:sqlite:" + filePath;
+    file = filePath;
 
     EntryStoreConfig config = new DefaultEntryStoreConfig();
-    config.setUrl(url);
+    config.setFile(filePath);
     repo = new DefaultEntryStore(config);
     repo.initialize();
   }
@@ -49,6 +49,7 @@ public class DefaultEntryStoreTest {
     repo.executeBatch();
     repo.commit();
 
+    String url = "jdbc:sqlite:" + file;
     Source source = new Source(url, null, null);
     Table table = new Table(source, "entries");
     org.assertj.db.api.Assertions.assertThat(table)
@@ -74,6 +75,7 @@ public class DefaultEntryStoreTest {
     repo.executeBatch();
     repo.commit();
 
+    String url = "jdbc:sqlite:" + file;
     try (Connection connection = JDBC.createConnection(url, new SQLiteConfig().toProperties())) {
       final long maxRowId = getMaxRow(connection);
       assertThat(maxRowId).isEqualTo(3);

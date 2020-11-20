@@ -1,7 +1,15 @@
 package com.tersesystems.blacklite;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
+import java.util.Objects;
+
 import org.sqlite.JDBC;
+
+import static java.util.Objects.*;
 
 /**
  * The live repository covers access to an SQLite database that has new entries that have not been
@@ -14,30 +22,45 @@ import org.sqlite.JDBC;
  * small enough to fit entirely in memory.
  */
 public class DefaultEntryStore implements EntryStore {
-  public static int APPLICATION_ID = 0xB1AC3117;
 
   private final Connection conn;
   private final String url;
+  private final Statements statements;
   private PreparedStatement insertStatement;
 
   private long totalInserts;
   private long totalBytes;
 
   public DefaultEntryStore(EntryStoreConfig config) throws SQLException {
-    if (!JDBC.isValidURL(config.getUrl())) {
-      throw new IllegalArgumentException("Invalid URL " + config.getUrl());
+    String fileString = requireNonNull(config.getFile(), "Null file");
+    Path path = Paths.get(fileString);
+    this.url = "jdbc:sqlite:" + path.toAbsolutePath();
+    if (!JDBC.isValidURL(this.url)) {
+      throw new IllegalArgumentException("Invalid URL " + config.getFile());
     }
-    this.url = config.getUrl();
-    this.conn = JDBC.createConnection(config.getUrl(), config.getProperties());
+    createParentDirectories(path);
+    this.conn = JDBC.createConnection(this.url, config.getProperties());
+    statements = Statements.instance();
+  }
+
+  private void createParentDirectories(Path path) throws SQLException {
+    final Path parentDir = path.getParent();
+    if (parentDir != null && ! Files.exists(parentDir)) {
+      try {
+        Files.createDirectories(parentDir);
+      } catch (IOException e) {
+        throw new SQLException(e);
+      }
+    }
   }
 
   @Override
   public void initialize() throws SQLException {
     try (Statement stmt = conn.createStatement()) {
-      stmt.execute(Statements.instance().createEntriesTable());
-      stmt.execute(Statements.instance().createEntriesView());
+      stmt.execute(statements.createEntriesTable());
+      stmt.execute(statements.createEntriesView());
     }
-    this.insertStatement = conn.prepareStatement(Statements.instance().insert());
+    this.insertStatement = conn.prepareStatement(statements.insert());
 
     // Set to transaction mode after setting up DDL.
     conn.setAutoCommit(false);

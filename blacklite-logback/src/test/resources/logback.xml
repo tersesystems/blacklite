@@ -17,7 +17,7 @@
     </appender>
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-        <url>jdbc:sqlite:/tmp/blacklite-logback/live.db</url>
+        <file>/tmp/blacklite-logback/live.db</file>
 
         <archiver class="com.tersesystems.blacklite.archive.DefaultArchiver">
             <file>/tmp/blacklite-logback/archive.db</file>

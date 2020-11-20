@@ -6,7 +6,7 @@
         </Console>
 
         <Blacklite name="Blacklite">
-            <url>jdbc:sqlite:/${sys:java.io.tmpdir}/blacklite/log4j.db</url>
+            <file>/${sys:java.io.tmpdir}/blacklite/log4j.db</file>
 
             <LogstashLayout dateTimeFormatPattern="yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZ"
                             eventTemplateUri="classpath:LogstashJsonEventLayoutV1.json"

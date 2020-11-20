@@ -46,27 +46,25 @@ public class Log4JBlackliteAppender extends AbstractAppender {
   public static Log4JBlackliteAppender createAppender(
       @PluginAttribute("name") @Required(message = "No name provided for BlackliteAppender")
           final String name,
-      @PluginAttribute("url") final String url,
+      @PluginAttribute("file") final String file,
       @PluginAttribute(value = "batchInsertSize", defaultInt = 1000) final int batchInsertSize,
       @PluginElement("archiver") final Log4J2Archiver archiver,
       @PluginElement("layout") final Layout<? extends Serializable> layout,
       @PluginElement("filter") final Filter filter)
       throws SQLException {
     if (name == null) {
-      LOGGER.error("No name provided for RifterAppender");
+      LOGGER.error("No name provided for BlackliteAppender");
       return null;
     }
 
-    if (url == null) {
-      LOGGER.error("No url provided for RifterAppender");
+    if (file == null) {
+      LOGGER.error("No file provided for BlackliteAppender");
       return null;
     }
 
     EntryStoreConfig config = new DefaultEntryStoreConfig();
 
-    // Recover if we get something that is just a raw file or URL string
-    String fullUrl = url.startsWith("jdbc:sqlite:") ? url : "jdbc:sqlite:" + url;
-    config.setUrl(fullUrl);
+    config.setFile(file);
     config.setBatchInsertSize(batchInsertSize);
     // config.setProperties(properties);
     LOGGER.info("Connecting with config " + config);

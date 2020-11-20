@@ -7,18 +7,18 @@ import org.sqlite.SQLiteConfig;
 
 public class DefaultEntryStoreConfig implements EntryStoreConfig {
 
-  private String url = "file:blacklite.db";
+  private String file;
   private Properties properties = liveConfig().toProperties();
   private long batchInsertSize = 1000;
 
   @Override
-  public String getUrl() {
-    return this.url;
+  public String getFile() {
+    return this.file;
   }
 
   @Override
-  public void setUrl(String url) {
-    this.url = url;
+  public void setFile(String file) {
+    this.file = file;
   }
 
   @Override
@@ -87,8 +87,8 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
   @Override
   public String toString() {
     return "DefaultEntryStoreConfig{"
-        + "url='"
-        + url
+        + "file='"
+        + file
         + '\''
         + ", properties="
         + properties

@@ -37,12 +37,6 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     try {
       StatusReporter statusReporter = new LogbackStatusReporter(this);
 
-      // Recover if we get something that is just a raw file or URL string
-      String url = config.getUrl();
-      if (!url.startsWith("jdbc:sqlite:")) {
-        url = "jdbc:sqlite:" + url;
-      }
-      config.setUrl(url);
       addInfo("Connecting with config " + config);
       if (this.archiver == null) {
         this.archiver = new NoOpArchiver();
@@ -79,13 +73,13 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   }
 
   @Override
-  public String getUrl() {
-    return config.getUrl();
+  public String getFile() {
+    return config.getFile();
   }
 
   @Override
-  public void setUrl(String url) {
-    config.setUrl(url);
+  public void setFile(String file) {
+    config.setFile(file);
   }
 
   @Override

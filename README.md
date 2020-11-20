@@ -189,7 +189,7 @@ You should always use a `shutdownHook` to allow Logback to drain the queue befor
     </appender>
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-        <url>jdbc:sqlite:/tmp/blacklite/live.db</url>
+        <file>/tmp/blacklite/live.db</file>
 
         <archiver class="com.tersesystems.blacklite.archive.DefaultArchiver">
             <file>/tmp/blacklite/archive.db</file>
@@ -300,7 +300,7 @@ Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appe
 <Configuration status="INFO" packages="com.tersesystems.blacklite.log4j2,com.tersesystems.blacklite.log4j2.zstd">
     <appenders>
         <Blacklite name="Blacklite">
-            <url>jdbc:sqlite:/${sys:java.io.tmpdir}/blacklite/log4j.db</url>
+            <file>/${sys:java.io.tmpdir}/blacklite/log4j.db</file>
 
             <!-- https://mvnrepository.com/artifact/com.vlkan.log4j2/log4j2-logstash-layout -->
             <LogstashLayout dateTimeFormatPattern="yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZ"

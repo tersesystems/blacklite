@@ -26,11 +26,10 @@ public class DefaultEntryStoreBenchmark {
 
   @Setup
   public void setUp() throws Exception {
-    // conn = Sqlite.connect("jdbc:sqlite::memory:");
     tempDirectoryPath = Files.createTempDirectory("blacklite");
-    String url = "jdbc:sqlite:" + tempDirectoryPath.resolve("test.db").toAbsolutePath().toString();
+    String file = tempDirectoryPath.resolve("test.db").toAbsolutePath().toString();
     EntryStoreConfig config = new DefaultEntryStoreConfig();
-    config.setUrl(url);
+    config.setFile(file);
     repository = new DefaultEntryStore(config);
     repository.initialize();
   }
