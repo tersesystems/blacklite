@@ -1,15 +1,13 @@
 package com.tersesystems.blacklite;
 
+import static java.util.Objects.*;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.util.Objects;
-
 import org.sqlite.JDBC;
-
-import static java.util.Objects.*;
 
 /**
  * The live repository covers access to an SQLite database that has new entries that have not been
@@ -45,7 +43,7 @@ public class DefaultEntryStore implements EntryStore {
 
   private void createParentDirectories(Path path) throws SQLException {
     final Path parentDir = path.getParent();
-    if (parentDir != null && ! Files.exists(parentDir)) {
+    if (parentDir != null && !Files.exists(parentDir)) {
       try {
         Files.createDirectories(parentDir);
       } catch (IOException e) {
