@@ -27,7 +27,7 @@ public class BlackliteReaderTest {
     commandLine.execute("-b", "five seconds ago", archiveFile);
 
     final QueryBuilder actual = runner.actualQueryBuilder;
-    assertThat(actual.getBefore()).isBefore(Instant.now().minusSeconds(5));
+    assertThat(actual.getBefore()).isBeforeOrEqualTo(Instant.now().minusSeconds(5));
   }
 
   @Test
@@ -47,7 +47,7 @@ public class BlackliteReaderTest {
     commandLine.execute("-a", "five seconds ago", archiveFile);
 
     final QueryBuilder actual = runner.actualQueryBuilder;
-    assertThat(actual.getAfter()).isBefore(Instant.now().minusSeconds(5));
+    assertThat(actual.getAfter()).isBeforeOrEqualTo(Instant.now().minusSeconds(5));
   }
 
   @Test
