@@ -3,7 +3,7 @@ package com.tersesystems.blacklite.archive;
 import com.tersesystems.blacklite.Statements;
 import java.sql.*;
 
-public class ArchiveRowsTriggeringPolicy implements TriggeringPolicy {
+public class RowBasedTriggeringPolicy implements TriggeringPolicy {
 
   private long maximumNumRows = Long.MAX_VALUE;
 

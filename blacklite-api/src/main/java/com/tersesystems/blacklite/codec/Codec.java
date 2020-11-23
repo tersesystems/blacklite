@@ -15,7 +15,7 @@ public interface Codec extends AutoCloseable {
    *
    * @param unencoded the bytes containing unencoded data.
    * @return the size of the encoded data.
-   * @throws CodecException
+   * @throws CodecException if the bytes cannot be encoded.
    */
   byte[] encode(byte[] unencoded) throws CodecException;
 
@@ -24,7 +24,7 @@ public interface Codec extends AutoCloseable {
    *
    * @param encoded the bytes containing encoded data.
    * @return the bytes containing the decoded data.
-   * @throws CodecException
+   * @throws CodecException if the bytes cannot be decoded.
    */
   byte[] decode(byte[] encoded) throws CodecException;
 

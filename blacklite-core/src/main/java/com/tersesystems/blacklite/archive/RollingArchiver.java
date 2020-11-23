@@ -2,8 +2,6 @@ package com.tersesystems.blacklite.archive;
 
 import static com.tersesystems.blacklite.DefaultEntryStore.APPLICATION_ID;
 
-import com.tersesystems.blacklite.EntryStore;
-import com.tersesystems.blacklite.Statements;
 import com.tersesystems.blacklite.StatusReporter;
 import com.tersesystems.blacklite.codec.Codec;
 import com.tersesystems.blacklite.codec.identity.IdentityCodec;
@@ -16,22 +14,17 @@ import org.sqlite.Function;
 import org.sqlite.JDBC;
 import org.sqlite.SQLiteConfig;
 
-public class DefaultArchiver implements Archiver {
+public class RollingArchiver extends AbstractArchiver implements FileArchiver {
 
   private String file;
-  private Properties properties = archiveSqliteConfig().toProperties();
 
-  // Maximum number of rows that is allowed in the main live database. */
-  private long archiveAfterRows = 10000;
+  private Properties properties = archiveSqliteConfig().toProperties();
 
   private Codec codec = new IdentityCodec();
 
-  private EntryStore entryStore;
-  private StatusReporter statusReporter;
-
   private RollingStrategy rollingStrategy;
-  private TriggeringPolicy triggeringPolicy;
 
+  @Override
   public String getFile() {
     return file;
   }
@@ -48,32 +41,20 @@ public class DefaultArchiver implements Archiver {
     this.properties = properties;
   }
 
-  public long getArchiveAfterRows() {
-    return archiveAfterRows;
-  }
-
-  public void setArchiveAfterRows(long archiveAfterRows) {
-    this.archiveAfterRows = archiveAfterRows;
-  }
-
-  @Override
   public Codec getCodec() {
     return codec;
   }
 
-  @Override
   public void setCodec(Codec codec) {
     this.codec = codec;
   }
 
-  @Override
-  public EntryStore getEntryStore() {
-    return entryStore;
+  public RollingStrategy getRollingStrategy() {
+    return rollingStrategy;
   }
 
-  @Override
-  public void setEntryStore(EntryStore entryStore) {
-    this.entryStore = entryStore;
+  public void setRollingStrategy(RollingStrategy rollingStrategy) {
+    this.rollingStrategy = rollingStrategy;
   }
 
   @Override
@@ -82,7 +63,7 @@ public class DefaultArchiver implements Archiver {
     // connection, probably transaction related.
     // Opening up a new connection is very lightweight in SQLite, and given that this
     // should only be happening once a second, it's not a huge load.
-    try (Connection conn = JDBC.createConnection(entryStore.getUrl(), getProperties())) {
+    try (Connection conn = JDBC.createConnection(getEntryStore().getUrl(), getProperties())) {
       Function codecFunction =
           new Function() {
             @Override
@@ -105,36 +86,6 @@ public class DefaultArchiver implements Archiver {
   @Override
   public void close() throws Exception {
     codec.close();
-  }
-
-  /** Returns true if archiving should happen, otherwise false. */
-  boolean shouldArchive(Connection conn) throws SQLException {
-    final long numRows = numRows(conn);
-    final long archiveAfterRows = getArchiveAfterRows();
-    boolean result = numRows > archiveAfterRows;
-    return result;
-  }
-
-  long numRows(Connection conn) throws SQLException {
-    try (PreparedStatement ps = conn.prepareStatement(statements().numRows())) {
-      ResultSet rs = ps.executeQuery();
-      if (rs.next()) {
-        return rs.getLong(1);
-      } else {
-        throw new IllegalStateException("No number of rows?");
-      }
-    }
-  }
-
-  long findMaxRowId(Connection conn) throws SQLException {
-    try (PreparedStatement ps = conn.prepareStatement(statements().selectMaxRowId())) {
-      final ResultSet rs = ps.executeQuery();
-      if (rs.next()) {
-        return rs.getLong(1);
-      } else {
-        throw new IllegalStateException("No row id?!?");
-      }
-    }
   }
 
   @Override
@@ -164,7 +115,6 @@ public class DefaultArchiver implements Archiver {
     String file = getFile();
     if (file == null) {
       statusReporter.addError("archive: No file found in archiver!");
-      System.exit(-1);
       return 0;
     }
 
@@ -194,12 +144,7 @@ public class DefaultArchiver implements Archiver {
         inserted = insertStatement.executeUpdate();
       }
 
-      int deleted = 0;
-      try (PreparedStatement deleteStatement =
-          conn.prepareStatement(statements().deleteLessThanRowId())) {
-        deleteStatement.setLong(1, rowId);
-        deleted = deleteStatement.executeUpdate();
-      }
+      int deleted = deleteFromLive(conn, rowId);
       // statusReporter.addInfo(String.format("Archived %s rows to %s", inserted, archivePath));
 
       if (inserted != deleted) {
@@ -211,7 +156,7 @@ public class DefaultArchiver implements Archiver {
       // Transactions will be atomic across databases, but only if the main database
       // is neither in WAL mode, or a :memory: database.
       // https://stackoverflow.com/questions/27224104/sqlite-using-one-file-vs-many-files
-
+      final TriggeringPolicy triggeringPolicy = getTriggeringPolicy();
       if (triggeringPolicy != null && rollingStrategy != null) {
         if (triggeringPolicy.isTriggered(conn)) {
           // XXX should add an option to index timestamp/level columns on rollover
@@ -231,54 +176,11 @@ public class DefaultArchiver implements Archiver {
     return inserted;
   }
 
-  private Statements statements() {
-    return Statements.instance();
-  }
-
   SQLiteConfig archiveSqliteConfig() {
     SQLiteConfig config = new SQLiteConfig();
     config.setApplicationId(APPLICATION_ID);
     config.setPageSize(4096);
     config.setEncoding(SQLiteConfig.Encoding.UTF8);
     return config;
-  }
-
-  public RollingStrategy getRollingStrategy() {
-    return rollingStrategy;
-  }
-
-  public void setRollingStrategy(RollingStrategy rollingStrategy) {
-    this.rollingStrategy = rollingStrategy;
-  }
-
-  public TriggeringPolicy getTriggeringPolicy() {
-    return triggeringPolicy;
-  }
-
-  public void setTriggeringPolicy(TriggeringPolicy triggeringPolicy) {
-    this.triggeringPolicy = triggeringPolicy;
-  }
-
-  @Override
-  public String toString() {
-    return "DefaultArchiver{"
-        + "file='"
-        + file
-        + '\''
-        + ", properties="
-        + properties
-        + ", maximumNumRows="
-        + archiveAfterRows
-        + ", codec="
-        + codec
-        + ", entryStore="
-        + entryStore
-        + ", statusReporter="
-        + statusReporter
-        + ", rollingStrategy="
-        + rollingStrategy
-        + ", triggeringPolicy="
-        + triggeringPolicy
-        + '}';
   }
 }

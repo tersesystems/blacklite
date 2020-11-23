@@ -1,6 +1,6 @@
 package com.tersesystems.blacklite.log4j2;
 
-import com.tersesystems.blacklite.archive.Archiver;
+import com.tersesystems.blacklite.archive.FileArchiver;
 import com.tersesystems.blacklite.archive.RollingStrategy;
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +54,7 @@ public class Log4JFixedWindowRollingStrategy extends AbstractRolloverStrategy
   }
 
   @Override
-  public void rollover(Archiver archiver) {
+  public void rollover(FileArchiver archiver) {
     int fileIndex;
     final StringBuilder buf = new StringBuilder(255);
     if (minIndex == Integer.MIN_VALUE) {
@@ -93,13 +93,13 @@ public class Log4JFixedWindowRollingStrategy extends AbstractRolloverStrategy
     renameAction.execute();
   }
 
-  private int purge(final int lowIndex, final int highIndex, Archiver archiver) {
+  private int purge(final int lowIndex, final int highIndex, FileArchiver archiver) {
     return useMax
         ? purgeAscending(lowIndex, highIndex, archiver)
         : purgeDescending(lowIndex, highIndex, archiver);
   }
 
-  protected int purgeAscending(final int lowIndex, final int highIndex, Archiver archiver) {
+  protected int purgeAscending(final int lowIndex, final int highIndex, FileArchiver archiver) {
     final SortedMap<Integer, Path> eligibleFiles = getEligibleFiles(archiver, true);
     final int maxFiles = highIndex - lowIndex + 1;
 
@@ -149,7 +149,7 @@ public class Log4JFixedWindowRollingStrategy extends AbstractRolloverStrategy
   }
 
   protected SortedMap<Integer, Path> getEligibleFiles(
-      final Archiver archiver, final boolean isAscending) {
+      final FileArchiver archiver, final boolean isAscending) {
     final StringBuilder buf = new StringBuilder();
     final String pattern = patternProcessor.getPattern();
     patternProcessor.formatFileName(strSubstitutor, buf, NotANumber.NAN);
@@ -157,7 +157,8 @@ public class Log4JFixedWindowRollingStrategy extends AbstractRolloverStrategy
     return getEligibleFiles(fileName, buf.toString(), pattern, isAscending);
   }
 
-  private int purgeDescending(final int lowIndex, final int highIndex, final Archiver archiver) {
+  private int purgeDescending(
+      final int lowIndex, final int highIndex, final FileArchiver archiver) {
     // Retrieve the files in descending order, so the highest key will be first.
     final SortedMap<Integer, Path> eligibleFiles = getEligibleFiles(archiver, false);
     final int maxFiles = highIndex - lowIndex + 1;
