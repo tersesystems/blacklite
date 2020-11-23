@@ -14,4 +14,3 @@ class DebugResultConsumer implements ResultConsumer {
     actualCount = rowCount;
   }
 }
-;
