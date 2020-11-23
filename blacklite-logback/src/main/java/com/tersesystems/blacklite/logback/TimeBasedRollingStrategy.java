@@ -8,7 +8,7 @@ import ch.qos.logback.core.rolling.helper.*;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
 import ch.qos.logback.core.util.FileSize;
-import com.tersesystems.blacklite.archive.Archiver;
+import com.tersesystems.blacklite.archive.FileArchiver;
 import com.tersesystems.blacklite.archive.RollingStrategy;
 import java.util.Date;
 import java.util.concurrent.Future;
@@ -29,7 +29,7 @@ public class TimeBasedRollingStrategy extends ContextAwareBase
 
   private int maxHistory = UNBOUND_HISTORY;
 
-  private Archiver archiver;
+  private FileArchiver archiver;
   private ArchiveRemover archiveRemover;
 
   boolean cleanHistoryOnStart = false;
@@ -57,7 +57,7 @@ public class TimeBasedRollingStrategy extends ContextAwareBase
     this.totalSizeCap = totalSizeCap;
   }
 
-  public void setParent(Archiver archiver) {
+  public void setParent(FileArchiver archiver) {
     this.archiver = archiver;
   }
 
@@ -116,7 +116,7 @@ public class TimeBasedRollingStrategy extends ContextAwareBase
   }
 
   @Override
-  public void rollover(Archiver archiver) {
+  public void rollover(FileArchiver archiver) {
     String msg =
         String.format(
             "rollover: maxHistory = %d, cleanHistoryOnStart = %s, totalSizeCap = %s",

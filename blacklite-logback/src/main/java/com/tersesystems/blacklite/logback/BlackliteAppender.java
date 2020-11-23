@@ -9,7 +9,8 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.encoder.Encoder;
 import com.tersesystems.blacklite.*;
 import com.tersesystems.blacklite.archive.Archiver;
-import com.tersesystems.blacklite.archive.NoOpArchiver;
+import com.tersesystems.blacklite.archive.DeletingArchiver;
+import com.tersesystems.blacklite.archive.TriggeringPolicy;
 import java.util.Properties;
 
 /** A logback appender using blacklite as a backend. */
@@ -20,6 +21,8 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   private Encoder<ILoggingEvent> encoder;
   private EntryWriter entryWriter;
   private Archiver archiver;
+
+  private TriggeringPolicy triggeringPolicy;
 
   public Encoder<ILoggingEvent> getEncoder() {
     return encoder;
@@ -38,8 +41,13 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
       StatusReporter statusReporter = new LogbackStatusReporter(this);
 
       addInfo("Connecting with config " + config);
+      if (config.getFile() == null || config.getFile().isEmpty()) {
+        addError("Required 'file' configuration setting is missing!");
+        return;
+      }
+
       if (this.archiver == null) {
-        this.archiver = new NoOpArchiver();
+        this.archiver = new DeletingArchiver();
       }
       this.entryWriter = new AsyncEntryWriter(statusReporter, config, archiver, name);
 

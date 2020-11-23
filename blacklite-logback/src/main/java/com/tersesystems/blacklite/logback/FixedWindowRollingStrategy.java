@@ -10,6 +10,7 @@ import ch.qos.logback.core.rolling.helper.RenameUtil;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
 import com.tersesystems.blacklite.archive.Archiver;
+import com.tersesystems.blacklite.archive.FileArchiver;
 import com.tersesystems.blacklite.archive.RollingStrategy;
 import java.io.File;
 
@@ -102,7 +103,7 @@ public class FixedWindowRollingStrategy extends ContextAwareBase
   }
 
   @Override
-  public void rollover(Archiver archiver) throws RolloverFailure {
+  public void rollover(FileArchiver archiver) throws RolloverFailure {
     addInfo(String.format("rollover: enter minIndex = %d maxIndex = %d", minIndex, maxIndex));
 
     // Inside this method it is guaranteed that the hereto active log file is

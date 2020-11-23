@@ -2,29 +2,19 @@ package com.tersesystems.blacklite.archive;
 
 import com.tersesystems.blacklite.EntryStore;
 import com.tersesystems.blacklite.StatusReporter;
-import com.tersesystems.blacklite.codec.Codec;
 import java.sql.SQLException;
 
 public class NoOpArchiver implements Archiver {
-  @Override
-  public Codec getCodec() {
-    return null;
-  }
-
-  @Override
-  public void setCodec(Codec codec) {}
+  private EntryStore entryStore;
 
   @Override
   public EntryStore getEntryStore() {
-    return null;
+    return this.entryStore;
   }
 
   @Override
-  public void setEntryStore(EntryStore entryStore) {}
-
-  @Override
-  public String getFile() {
-    return null;
+  public void setEntryStore(EntryStore entryStore) {
+    this.entryStore = entryStore;
   }
 
   @Override
@@ -33,7 +23,7 @@ public class NoOpArchiver implements Archiver {
   }
 
   @Override
-  public void close() {}
+  public void close() throws Exception {}
 
   @Override
   public void initialize(StatusReporter statusReporter) throws SQLException {}
