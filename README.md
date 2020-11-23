@@ -331,9 +331,9 @@ Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appe
                         min="1"
                         max="5"
                         filePattern="${sys:java.io.tmpdir}/blacklite/archive-%i.db"/>
-                <ArchiveRowsTriggeringPolicy>
+                <RowBasedTriggeringPolicy>
                     <maximumNumRows>100000</maximumNumRows>
-                </ArchiveRowsTriggeringPolicy>
+                </RowBasedTriggeringPolicy>
             </Archiver>
         </Blacklite>
 
