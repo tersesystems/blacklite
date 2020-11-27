@@ -10,7 +10,7 @@ dependencies {
     api group: 'org.xerial', name: 'sqlite-jdbc', version: '3.32.3.2'
 
     // https://mvnrepository.com/artifact/org.jctools/jctools-core
-    compile group: 'org.jctools', name: 'jctools-core', version: '3.1.0'
+    compile group: 'org.jctools', name: 'jctools-core', version: '3.2.0'
 
     testImplementation 'org.awaitility:awaitility:4.0.3'
     testImplementation 'org.assertj:assertj-core:3.13.2'
