@@ -118,7 +118,7 @@ public class BlackliteReaderTest {
     final String sql = actual.createSQL();
     assertThat(sql)
         .isEqualTo(
-            "SELECT content FROM entries WHERE  timestamp < ?  AND  timestamp > ?  AND level > 9000");
+            "SELECT content FROM entries WHERE epoch_secs < ?  AND epoch_secs > ?  AND level > 9000");
   }
 
   @Test
@@ -131,7 +131,7 @@ public class BlackliteReaderTest {
     final String sql = actual.createSQL();
     assertThat(sql)
         .isEqualTo(
-            "SELECT COUNT(*) FROM entries WHERE  timestamp < ?  AND  timestamp > ?  AND level > 9000");
+            "SELECT COUNT(*) FROM entries WHERE epoch_secs < ?  AND epoch_secs > ?  AND level > 9000");
   }
 
   static class TestBlackliteReader extends BlackliteReader {

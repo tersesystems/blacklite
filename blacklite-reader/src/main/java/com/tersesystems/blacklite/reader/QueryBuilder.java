@@ -80,14 +80,14 @@ class QueryBuilder {
     }
 
     if (before != null) {
-      sb.append(" timestamp < ? ");
+      sb.append("epoch_secs < ? ");
       if (boundParams > 1) {
         sb.append(" AND ");
       }
     }
 
     if (after != null) {
-      sb.append(" timestamp > ? ");
+      sb.append("epoch_secs > ? ");
       if (whereString != null && !whereString.isEmpty()) {
         sb.append(" AND ");
       }
