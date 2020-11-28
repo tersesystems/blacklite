@@ -45,6 +45,8 @@ In addition, providing data in SQLite format means you can leverage tools built 
 
 More details on [querying SQLite using Python and sqlite3 here](SQLITE.md).
 
+Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
+
 ## Installation
 
 ### Gradle
