@@ -10,7 +10,7 @@ output = [
 	].join('\n')
 -->
 [![Bintray](https://img.shields.io/badge/bintray-tersesystems%3Ablacklite-blue.svg)](https://bintray.com/tersesystems/maven/blacklite/view)
-[![Latest version](https://img.shields.io/badge/latest-0.1.0-blue.svg)](https://github.com/tersesystems/blacklite/releases/latest)
+[![Latest version](https://img.shields.io/badge/latest-1.0.0-blue.svg)](https://github.com/tersesystems/blacklite/releases/latest)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://www.tldrlegal.com/l/apache2)
 
 [![Travis CI](https://travis-ci.org/tersesystems/blacklite.svg?branch=master)](https://travis-ci.org/tersesystems/blacklite)
