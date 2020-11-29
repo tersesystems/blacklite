@@ -5,7 +5,7 @@
 
 The table structure is as follows:
 
-```
+```sql
 CREATE TABLE IF NOT EXISTS entries (
   epoch_secs LONG, // number of seconds since epoch
   nanos INTEGER,  // nanoseconds in the second
@@ -14,24 +14,29 @@ CREATE TABLE IF NOT EXISTS entries (
 );
 ```
 
-There are no indices on any columns, for speed of inserts.  You are free to add an index if you
-expect to be querying on a regular basis:
+There are no indices on any columns, for speed of inserts.  You are free to add an index if you expect to be querying on a regular basis:
 
-```
+```sql
 CREATE INDEX IF NOT EXISTS epoch_secs_idx ON entries (epoch_secs);
 CREATE INDEX IF NOT EXISTS level_idx ON entries (level);
 ```
 
 Also note that if you are using structured logging, you can [index using expressions](https://www.sqlite.org/expridx.html), including over JSON:
 
-```
+```sql
 CREATE INDEX message_idx ON entries (json_extract(content, '$.message') COLLATE NOCASE);
 ```
 
-Because the database shows the timestamp as seconds since epoch, a view is added that displays
- the timestamp in both UTC and local time.
+You can also use [expose JSON paths as generated columns](https://dgl.cx/2020/06/sqlite-json-support):
 
+```sql
+ALTER TABLE entries ADD COLUMN message TEXT
+    GENERATED ALWAYS AS (json_extract(content, '$.message')) VIRTUAL;
 ```
+
+Because the database shows the timestamp as seconds since epoch, a view is added that displays the timestamp in both UTC and local time.
+
+```sql
 CREATE VIEW IF NOT EXISTS entries_view AS
   SELECT datetime(epoch_secs, 'unixepoch', 'utc') as timestamp_utc,
   datetime(epoch_secs, 'unixepoch', 'localtime') as timestamp_local,
@@ -52,7 +57,7 @@ sqlite3 archive.db
 And from there you can do individual queries (the `identity` codec is used here so there's no
  encoding):
 
-```sqlite-psql
+```sql
 SELECT _rowid_, datetime(epoch_secs, 'unixepoch', 'localtime'), nanos, content FROM entries
 WHERE content IS NOT NULL ORDER BY epoch_secs ASC LIMIT 0, 100;
 ```
@@ -63,7 +68,7 @@ WHERE content IS NOT NULL ORDER BY epoch_secs ASC LIMIT 0, 100;
 
 You can select from a specific rowid:
 
-```
+```sql
 SELECT _rowid_,* from entries where _rowid_ = 6940072;
 ```
 
@@ -77,20 +82,17 @@ and get back:
 If you are using structured logging, you can query the content directly using the [JSON
  extensions](https://www.sqlite.org/json1.html):
 
-```
-sqlite3 live.db "SELECT * FROM entries_view WHERE json_extract(content, '$.message') LIKE
- 'warning%' LIMIT 1"
+```bash
+sqlite3 live.db "SELECT * FROM entries_view WHERE json_extract(content, '$.message') LIKE 'warning%' LIMIT 1"
 ```
 
-You can also select an individual row using the rowid, an implicit autoincrementing primary key
- that SQLite adds automatically:
+You can also select an individual row using the rowid, an implicit autoincrementing primary key that SQLite adds automatically:
 
-```
+```sql
 SELECT _rowid_,* from entries where _rowid_ = 6940072;
 ```
 
-If you have a query that you want to go over multiple SQLite files, you should use the [ATTACH
- DATABASE](https://www.sqlite.org/lang_attach.html) command and then query over all the databases at once.
+If you have a query that you want to go over multiple SQLite files, you should use the [ATTACH DATABASE](https://www.sqlite.org/lang_attach.html) command and then query over all the databases at once.
 
 ### Views
 
@@ -120,21 +122,18 @@ sqlite> SELECT _rowid_,* FROM entries WHERE json_extract(content,'$.message') LI
 sqlite>
 ```
 
-Note we get back two rows here.  This is because the nanotime resolution is not absolute, and so
- it's possible for two different statements to show up in the same nanosecond.  If you're
-  spitting out logs, you may want to include a unique flake id or counter so that you can
-   distinguish them.
+Note we get back two rows here.  This is because the nanotime resolution is not absolute, and so it's possible for two different statements to show up in the same nanosecond.  If you're spitting out logs, you may want to include a unique flake id or counter so that you can distinguish them.
 
 You can also query from the command line:
 
-```
+```bash
 sqlite3 ./rifter.db "SELECT json_extract(content,'$.message') FROM entries WHERE _rowid_ = 6940072"
 debugging is fun!!! 2020-10-11T02:08:58.679486Z
 ```
 
 or you can extract the JSON directly to stdout and pass it through `jq`:
 
-```
+```bash
 ❱ sqlite3 ./rifter.db  "SELECT content FROM entries WHERE content IS NOT NULL LIMIT 1" | jq
 {
   "@timestamp": "2020-10-10T19:08:58.679-07:00",
@@ -151,14 +150,13 @@ or you can extract the JSON directly to stdout and pass it through `jq`:
 
 For compressed content, blobs can be written out as files on the filesystem and then decompressed.
 
-```
+```bash
 sqlite3 rifter.db "SELECT writefile('1.zst', content) FROM entries WHERE _rowid_ = 1"
 ```
 
-If you look at the file with `vi`, you'll see plain text.  This is because vi is smart enough to
- autodecode for you. Don't be deceived, it's actually still zstandard:
+If you look at the file with `vi`, you'll see plain text.  This is because vi is smart enough to autodecode for you. Don't be deceived, it's actually still zstandard:
 
-```
+```bash
 ❱ hexdump 1.zst
 0000000 b528 fd2f e720 059d 7200 268b 3022 568b
 0000010 0301 966d 5525 8f8e 1a94 5e28 0523 e1fc
@@ -184,8 +182,7 @@ And you can decrypt it as follows:
 
 ## Python support with sqlite-utils
 
-Extracting content is simple and easy using [sqlite-utils](https://sqlite-utils.readthedocs.io/en
-/stable/):
+Extracting content is simple and easy using [sqlite-utils](https://sqlite-utils.readthedocs.io/en/stable/):
 
 ```bash
 sudo apt install python3-pip
@@ -220,7 +217,7 @@ for row in db["entries"].rows_where("epoch_secs < ? limit 1", [epoch_time]):
 
 This produces:
 
-```
+```bash
 ❱ ./reader.py
 epoch_secs =  1603055625 level =  10000 message =  debugging is fun!!! 2020-10-18T21:13:45.317090Z
 ```
