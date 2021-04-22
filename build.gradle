@@ -1,34 +1,27 @@
-plugins {
-    id 'java'
-    id "org.shipkit.java"              version "2.2.6"
-    id "com.diffplug.spotless" version "5.7.0"
-}
-
-allprojects {
+buildscript {
     repositories {
-        jcenter()
-        mavenCentral()
+        mavenLocal() //for local testing of shipkit
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "org.shipkit:shipkit-auto-version:1.+"
+        classpath "org.shipkit:shipkit-changelog:1.+"
+        classpath "io.github.gradle-nexus:publish-plugin:1.0.0"
     }
 }
 
-spotless {
-    freshmark {
-        target '*.md'
-        propertiesFile('spotless.properties')
+apply from: "gradle/release.gradle"
+
+allprojects {
+    repositories {
+        mavenCentral()
     }
 }
 
 subprojects { subproj ->
     apply plugin: 'java'
-    apply plugin: 'com.diffplug.spotless'
 
     group 'com.tersesystems.blacklite'
-
-    spotless {
-        java {
-            googleJavaFormat()
-        }
-    }
 
     dependencies {
         testImplementation 'org.apiguardian:apiguardian-api:1.1.0'
@@ -41,32 +34,4 @@ subprojects { subproj ->
     test {
         useJUnitPlatform()
     }
-}
-
-// Go through all the artifacts and find javadoc for it...
-static List<String> javadocFromDependencies(Configuration config) {
-    List<String> javadocs = []
-    config.dependencies.each { dep ->
-        javadocs.add(artifactToJavadoc(dep.group, dep.name, dep.version))
-    }
-    javadocs
-}
-
-static String jvmToJavadoc(JavaVersion jvmVersion) {
-    if (jvmVersion.java8) {
-        'https://docs.oracle.com/javase/8/docs/api/'
-    } else if (jvmVersion.java9) {
-        'https://docs.oracle.com/javase/9/docs/api/'
-    }else if (jvmVersion.java10) {
-        'https://docs.oracle.com/javase/10/docs/api/'
-    }else if (jvmVersion.java11) {
-        'https://docs.oracle.com/en/java/javase/11/docs/api/'
-    } else {
-        'https://docs.oracle.com/javase/8/docs/api/'
-    }
-}
-
-static String artifactToJavadoc(String organization, String name, String apiVersion) {
-    String slashedOrg = organization.replace('.', '/')
-    "https://oss.sonatype.org/service/local/repositories/releases/archive/$slashedOrg/$name/$apiVersion/$name-$apiVersion-javadoc.jar/!/"
 }
