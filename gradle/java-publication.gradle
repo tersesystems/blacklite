@@ -1,0 +1,57 @@
+//Auxiliary jar files required by Maven module publications
+task sourcesJar(type: Jar, dependsOn: classes) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+//TODO: java.withSourcesJar(), java.withJavadocJar()
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+apply plugin: 'maven-publish'
+publishing { //https://docs.gradle.org/current/userguide/publishing_maven.html
+    publications {
+        maven(MavenPublication) { //name of the publication
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = tasks.jar.archiveBaseName
+                description = "Demo project showcasing automated publications with Shipkit Gradle plugins"
+                url = "https://github.com/shipkit/shipkit-demo"
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'https://github.com/shipkit/shipkit-demo/blob/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'mockitoguy'
+                        name = 'Szczepan Faber'
+                        url = 'https://github.com/mockitoguy'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/shipkit/shipkit-demo.git'
+                }
+            }
+        }
+    }
+
+    repositories {
+        // useful for testing - running "publish" will create artifacts/pom in a local dir
+        maven { url = "$rootDir/build/repo" }
+    }
+}
+
+apply plugin: 'signing'
+signing { // https://docs.gradle.org/current/userguide/signing_plugin.html
+    if (System.getenv("PGP_KEY")) {
+        useInMemoryPgpKeys(System.getenv("PGP_KEY"), System.getenv("PGP_PWD"))
+        sign publishing.publications.maven
+    }
+}
