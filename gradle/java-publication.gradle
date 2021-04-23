@@ -20,23 +20,23 @@ publishing { //https://docs.gradle.org/current/userguide/publishing_maven.html
 
             pom {
                 name = tasks.jar.archiveBaseName
-                description = "Demo project showcasing automated publications with Shipkit Gradle plugins"
-                url = "https://github.com/shipkit/shipkit-demo"
+                description = "Blacklite"
+                url = "https://github.com/tersesystems/blacklite"
                 licenses {
                     license {
-                        name = 'MIT'
-                        url = 'https://github.com/shipkit/shipkit-demo/blob/master/LICENSE'
+                        name = 'Apache2'
+                        url = 'https://github.com/tersesystems/blacklite/blog/main/LICENSE'
                     }
                 }
                 developers {
                     developer {
-                        id = 'mockitoguy'
-                        name = 'Szczepan Faber'
-                        url = 'https://github.com/mockitoguy'
+                        id = 'wsargent'
+                        name = 'Will Sargent'
+                        url = 'https://github.com/wsargent'
                     }
                 }
                 scm {
-                    url = 'https://github.com/shipkit/shipkit-demo.git'
+                    url = 'https://github.com/tersesystems/blacklite.git'
                 }
             }
         }
