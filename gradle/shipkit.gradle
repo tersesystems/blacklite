@@ -1,7 +1,0 @@
-
-//shipkit {
-//    gitHub.repository = "tersesystems/blacklite"
-//    gitHub.readOnlyAuthToken = "f602321e7bdca17438b3ea4b8473c7b1662e7d2b"
-//    gitHub.writeAuthToken = System.getenv("GH_WRITE_TOKEN")
-//}
-

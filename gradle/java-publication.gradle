@@ -30,9 +30,9 @@ publishing { //https://docs.gradle.org/current/userguide/publishing_maven.html
                 }
                 developers {
                     developer {
-                        id = 'wsargent'
-                        name = 'Will Sargent'
-                        url = 'https://github.com/wsargent'
+                        id = 'tersesystems'
+                        name = 'Terse Systems'
+                        url = 'https://github.com/tersesystems'
                     }
                 }
                 scm {
@@ -50,8 +50,7 @@ publishing { //https://docs.gradle.org/current/userguide/publishing_maven.html
 
 apply plugin: 'signing'
 signing { // https://docs.gradle.org/current/userguide/signing_plugin.html
-    if (System.getenv("PGP_KEY")) {
-        useInMemoryPgpKeys(System.getenv("PGP_KEY"), System.getenv("PGP_PWD"))
-        sign publishing.publications.maven
-    }
+    // Give up on using PGP_KEY, leverage gpg-agent and release locally
+    useGpgCmd()
+    sign publishing.publications.maven
 }
