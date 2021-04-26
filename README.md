@@ -55,9 +55,7 @@ Add the following resolver:
 
 ```
 repositories {
-    maven {
-        url  "https://dl.bintray.com/tersesystems/maven"
-    }
+    mavenCentral()
 }
 ```
 
@@ -78,36 +76,6 @@ implementation 'com.tersesystems.blacklite:blacklite-log4j2-codec-zstd:<latestVe
 ```
 
 ### Maven
-
-Add the `tersesystems-maven` repository to `settings.xml`:
-
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<settings xsi:schemaLocation='http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd'
-          xmlns='http://maven.apache.org/SETTINGS/1.0.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
-
-    <profiles>
-        <profile>
-            <repositories>
-                <repository>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                    <id>bintray-tersesystems-maven</id>
-                    <name>bintray</name>
-                    <url>https://dl.bintray.com/tersesystems/maven</url>
-                </repository>
-            </repositories>
-            <id>bintray</id>
-        </profile>
-    </profiles>
-    <activeProfiles>
-        <activeProfile>bintray</activeProfile>
-    </activeProfiles>
-</settings>
-```
-
-and then add the libraries.
 
 For logback:
 
@@ -146,7 +114,6 @@ or log4j:
 SBT installation is fairly straightforward.
 
 ```sbt
-resolvers += Resolver.bintrayRepo("tersesystems", "maven")
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-logback" % "<latestVersion>"
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-codec-zstd" % "<latestVersion>"
 
