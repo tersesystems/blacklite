@@ -2,15 +2,13 @@
 
 <!---freshmark shields
 output = [
-	link(shield('Maven artifact', 'mavenCentral', 'tersesystems:blacklite', 'blue'), 'https://search.maven.org/search?q=blacklite'),
-	link(shield('Latest version', 'latest', '{{latestVersion}}', 'blue'), 'https://github.com/tersesystems/blacklite/releases/latest'),
+        link(shield('Maven central', 'mavencentral', '{{group}}:{{artifactIdMaven}}', 'blue'), 'https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22{{group}}%22%20AND%20a%3A%22{{artifactIdMaven}}%22'),
 	link(shield('License Apache-2.0', 'license', 'Apache-2.0', 'blue'), 'https://www.tldrlegal.com/l/apache2'),
 	'',
 	link(image('Travis CI', 'https://travis-ci.org/tersesystems/blacklite.svg?branch=master'), 'https://travis-ci.org/tersesystems/blacklite')
 	].join('\n')
 -->
-[![Bintray](https://img.shields.io/badge/bintray-tersesystems%3Ablacklite-blue.svg)](https://bintray.com/tersesystems/maven/blacklite/view)
-[![Latest version](https://img.shields.io/badge/latest-1.0.1-blue.svg)](https://github.com/tersesystems/blacklite/releases/latest)
+[![Maven central](https://img.shields.io/badge/mavencentral-com.tersesystems.blacklite%3Ablacklite-blue.svg)](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.tersesystems.blacklite%22%20AND%20a%3A%22blacklite%22)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://www.tldrlegal.com/l/apache2)
 
 [![Travis CI](https://travis-ci.org/tersesystems/blacklite.svg?branch=master)](https://travis-ci.org/tersesystems/blacklite)
