@@ -8,7 +8,7 @@ output = [
 	link(image('Travis CI', 'https://travis-ci.org/tersesystems/blacklite.svg?branch=master'), 'https://travis-ci.org/tersesystems/blacklite')
 	].join('\n')
 -->
-[![Maven central](https://img.shields.io/badge/mavencentral-com.tersesystems.blacklite%3Ablacklite-blue.svg)](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.tersesystems.blacklite%22%20AND%20a%3A%22blacklite%22)
+[![Maven central](https://img.shields.io/badge/mavencentral-com.tersesystems.blacklite%3Ablacklite-logback-blue.svg)](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.tersesystems.blacklite%22%20AND%20a%3A%22blacklite-logback%22)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://www.tldrlegal.com/l/apache2)
 
 [![Travis CI](https://travis-ci.org/tersesystems/blacklite.svg?branch=master)](https://travis-ci.org/tersesystems/blacklite)
