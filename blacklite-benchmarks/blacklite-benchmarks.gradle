@@ -10,6 +10,8 @@ sourceSets {
     }
 }
 
+tasks.withType(PublishToMavenRepository).configureEach { it.enabled = false }
+
 // https://gist.github.com/mrbald/7bbb5113c3164d5243314da8c28649a1
 dependencies {
     compile project(':blacklite-core')
