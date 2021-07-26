@@ -15,11 +15,11 @@ import picocli.CommandLine.Parameters;
 import com.opencsv.*;
 import com.opencsv.exceptions.CsvValidationException;
 
-import java.io.File;
 import java.time.Instant;
 import java.time.format.*;
-
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.io.*;
 
 import java.util.concurrent.Callable;
 
@@ -33,13 +33,13 @@ class importcsv implements Callable<Integer> {
   @Parameters(paramLabel = "CSV", description = "CSV files to import")
   String csv;
 
-  @Parameters(paramLabel = "Level", description = "Level Field", defaultValue = "level")
+  @Parameters(paramLabel = "level", description = "Level Field", defaultValue = "level")
   String levelField;
 
-  @Parameters(paramLabel = "Timestamp", description = "Timestamp Field", defaultValue = "timestamp")
+  @Parameters(paramLabel = "timestamp", description = "Timestamp Field", defaultValue = "timestamp_utc")
   String timestampField;
 
-  @Parameters(paramLabel = "Content", description = "Content Field", defaultValue = "entry")
+  @Parameters(paramLabel = "content", description = "Content Field", defaultValue = "content")
   String contentField;
 
   DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_INSTANT;
@@ -55,6 +55,7 @@ class importcsv implements Callable<Integer> {
   public Integer call() throws Exception {
     config.setFile(file);
     Archiver archiver = new NoOpArchiver();
+    String name = "blacklite";
 
     // StatusReporter statusReporter, EntryStoreConfig config, Archiver archiver, String name)
     BlockingEntryWriter writer = new BlockingEntryWriter(StatusReporter.DEFAULT, config, archiver, name);
@@ -65,11 +66,11 @@ class importcsv implements Callable<Integer> {
         while ((values = reader.readMap()) != null) {
           Instant ts = parseInstant(values.get(timestampField));
           long epochSeconds = ts.getEpochSecond();
-          int nanos = ts.getNanos();
-          int level = values.get(levelField);
-          byte[] content = values.get(contentField);
+          int nanos = ts.getNano();
+          int level = Integer.parseInt(values.get(levelField));
+          String content = values.get(contentField);
 
-          writer.write(epochSeconds, nanos, level, content);
+          writer.write(epochSeconds, nanos, level, content.getBytes(StandardCharsets.UTF_8));
         }
       }
     } finally {
@@ -79,10 +80,10 @@ class importcsv implements Callable<Integer> {
   }
 
   public Instant parseInstant(String dateString) {
-    return dateTimeFormatter.format(dateString);
+    return Instant.from(dateTimeFormatter.parse(dateString));
   }
 
-  public CSVReaderHeaderAware getReader(String csv) {
+  public CSVReaderHeaderAware getReader(String csv) throws IOException {
     return new CSVReaderHeaderAware(new FileReader(csv));
   }
 
