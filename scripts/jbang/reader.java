@@ -18,11 +18,11 @@ import com.tersesystems.blacklite.reader.*;
 
 import java.lang.Runnable;
 
-@Command(name = "hellocli",
+@Command(name = "reader",
         mixinStandardHelpOptions = true,
-        version = "hellocli 0.1",
-        description = "hellocli made with jbang")
-class hellocli implements Runnable {
+        version = "reader 0.1",
+        description = "reader made with jbang")
+class reader implements Runnable {
 
     @Parameters(paramLabel = "FILE", description = "one or more files to read")
     File file;
@@ -41,7 +41,7 @@ class hellocli implements Runnable {
     boolean count;
 
     public static void main(String... args) {
-        final CommandLine commandLine = new CommandLine(new hellocli());
+        final CommandLine commandLine = new CommandLine(new reader());
         if (commandLine.isUsageHelpRequested()) {
           commandLine.usage(System.out);
           return;

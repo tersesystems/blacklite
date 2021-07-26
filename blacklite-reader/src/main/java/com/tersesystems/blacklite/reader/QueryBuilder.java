@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 
-class QueryBuilder {
+public class QueryBuilder {
 
   private String whereString;
   private Instant before;

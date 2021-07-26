@@ -97,13 +97,22 @@ public class DefaultEntryStore implements EntryStore {
 
   @Override
   public void close() throws Exception {
-    executeBatch();
-    commit();
-    insertStatement.close();
-    vacuum();
-    conn.close();
+    try {
+      executeBatch();
+      commit();
+    } finally {
+      insertStatement.close();
+      vacuum();
+      conn.close();
+    }
   }
 
+  /**
+   * Vacuums the database.
+   *
+   * Note that this will change the autocommit setting while excution update is being
+   * called!
+   */
   @Override
   public void vacuum() throws SQLException {
     // Do a full vacuum of the live repository.  This
@@ -125,5 +134,6 @@ public class DefaultEntryStore implements EntryStore {
     try (Statement stmt = conn.createStatement()) {
       stmt.executeUpdate("VACUUM");
     }
+    conn.setAutoCommit(false);
   }
 }

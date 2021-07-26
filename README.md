@@ -19,6 +19,8 @@ It combines all the advantages of writing to a database with the speed and contr
 around a flat file.  Blacklite supports both [Logback](http://logback.qos.ch/) and
 [Log4J 2](https://logging.apache.org/log4j/2.x/).
 
+Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
+
 * SQLite file means [total compatibility](https://sqlite.org/locrsf.html) and support over all platforms.
 * Uses [memory mapping](https://www.sqlite.org/mmap.html), batch inserts for maximum
  throughput with minimum latency.  No indexes, no autoincrement fields.
@@ -35,15 +37,35 @@ Blacklite is designed for ubiquitous logging and "logging-aware" applications:
 
 Practically speaking, with some decent hardware you can budget around 800 debugging statements per 1 ms request.  Using [conditional logging](https://tersesystems.github.io/blindsight/usage/conditional.html), you can turn on debugging in production and get a complete picture of what a single request is doing.  See [terse-logback-showcase](https://github.com/tersesystems/terse-logback-showcase) for a live demonstration.
 
-In addition, providing data in SQLite format means you can leverage tools built using SQLite:
+## Reading
 
+Providing data in SQLite format means you can leverage tools built using SQLite.
+
+### Editor / IDE Plugins
+
+* [sqlite VS Code Plugin](https://marketplace.visualstudio.com/items?itemName=alexcvzz.vscode-sqlite)
+* [Database Navigator for IntelliJ IDEA](https://plugins.jetbrains.com/plugin/1800-database-navigator)
+
+### GUI Tools
+
+* [SQLite Browser](https://sqlitebrowser.org/)
+* [SQLite Speed](https://sqlitespeed.com/)
+
+### Command Line Tools
+
+* [blacklite-reader](https://github.com/tersesystems/blacklite/tree/main/blacklite-reader/)
 * [sqlite-utils](https://sqlite-utils.readthedocs.io/en/stable/): Read and process SQLite files from command line
+
+### Web Applications
+
 * [Datasette](https://docs.datasette.io/en/stable/): Exposing SQLite files as web applications
 * [Observable HQ](https://observablehq.com/@mbostock/sqlite): Using SQLite data in visualization notebooks
 
-More details on [querying SQLite using Python and sqlite3 here](SQLITE.md).
+### Scripts
 
-Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
+There are scripts available for manipulating SQLite in REPL environments and processing through small programs in JSON.
+
+More details on [querying SQLite using Python and sqlite3 here](SQLITE.md).
 
 ## Installation
 
@@ -318,77 +340,6 @@ Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appe
 ```
 
 It is broadly similar to the Logback system.
-
-### Reader
-
-There's a command line blacklite reader that can return the contents given parameters.
-
-You can run it from the command line using the JAR:
-
-```
-export BLACKLITE_VERSION=0.1.0-SNAPSHOT
-java -jar $HOME/.m2/repository/com/tersesystems/blacklite/blacklite-reader/$BLACKLITE_VERSION/blacklite-reader-$BLACKLITE_VERSION-all.jar $*;
-```
-
-but it's probably easier to wrap it in a bash script, like `blacklite-reader`.
-
-```
-$ blacklite-reader live.db
-```
-
-which then renders the contents:
-
-```json
-{"@timestamp":"2020-11-18T19:46:58.111-08:00","@version":"1","message":"Module execution: 2042ms","logger_name":"com.google.inject.internal.util.Stopwatch","thread_name":"main","level":"DEBUG","level_value":10000,"application.home":"/home/wsargent/work/memalloctest/target/universal/stage"}
-```
-
-You can also render the count:
-
-```
-$ blacklite-reader -c live.db
-126
-```
-
-The blacklite reader has a number of command line options:
-
-```
-Usage: blacklite-reader [-chvV] [--binary] [--charset=CHARSET] [-t=<timezone>]
-                        [-w=WHERE] [-a=AFTER | -s=START] [-b=BEFORE | -e=END]
-                        FILE
-Outputs content from blacklite database
-      FILE                one or more files to read
-  -a, --after=AFTER       Only render entries after the given date
-  -b, --before=BEFORE     Only render entries before the given date
-      --binary            Renders content as raw BLOB binary
-  -c, --count             Return a count of entries
-      --charset=CHARSET   Charset (default: utf8)
-  -e, --end=END           Only render entries before the given epoch second
-  -h, --help              display this help message
-  -s, --start=START       Only render entries after the start of given epoch
-                            second
-  -t, --timezone=<timezone>
-                          Use the given timezone for before/after dates
-  -v, --verbose           Print verbose logging
-  -V, --version           display version info
-  -w, --where=WHERE       Custom SQL WHERE clause
-```
-
-You can use absolute or relative date processing, i.e. "five seconds ago" using [Natty](https://github.com/joestelmach/natty/blob/master/src/test/java/com/joestelmach/natty/DateTest.java):
-
-```
-./blacklite-reader \
-  --after="2020-11-03 19:22:09" \
-  --before="2020-11-03 19:22:11" \
-  --timezone=PST \
-  /tmp/blacklite/archive.2020-11-03-07-22.669.db
-```
-
-You can also extract data using the `binary` flag and redirect to a file, which you can decompress later.
-
-```bash
-./blacklite-reader --binary /tmp/blacklite/archive.db > zarchive.zst
-zstd -d zarchive.zst
-```
 
 ## Benchmarks
 
