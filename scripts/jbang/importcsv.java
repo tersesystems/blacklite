@@ -54,6 +54,8 @@ class importcsv implements Callable<Integer> {
   @Override
   public Integer call() throws Exception {
     config.setFile(file);
+    config.setBatchInsertSize(1);
+    
     Archiver archiver = new NoOpArchiver();
     String name = "blacklite";
 
@@ -69,6 +71,8 @@ class importcsv implements Callable<Integer> {
           int nanos = ts.getNano();
           int level = Integer.parseInt(values.get(levelField));
           String content = values.get(contentField);
+
+          System.out.println("values " + values);
 
           writer.write(epochSeconds, nanos, level, content.getBytes(StandardCharsets.UTF_8));
         }
