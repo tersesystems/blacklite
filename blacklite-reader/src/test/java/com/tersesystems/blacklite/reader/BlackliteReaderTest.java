@@ -11,16 +11,6 @@ public class BlackliteReaderTest {
   private String archiveFile = "/some/random/file";
 
   @Test
-  public void testCount() {
-    final TestBlackliteReader runner = new TestBlackliteReader();
-    final CommandLine commandLine = new CommandLine(runner);
-    commandLine.execute("-c", archiveFile);
-
-    final QueryBuilder actual = runner.actualQueryBuilder;
-    assertThat(actual.getCount()).isTrue();
-  }
-
-  @Test
   public void testBefore() {
     final TestBlackliteReader runner = new TestBlackliteReader();
     final CommandLine commandLine = new CommandLine(runner);
@@ -118,20 +108,7 @@ public class BlackliteReaderTest {
     final String sql = actual.createSQL();
     assertThat(sql)
         .isEqualTo(
-            "SELECT content FROM entries WHERE epoch_secs < ?  AND epoch_secs > ?  AND level > 9000");
-  }
-
-  @Test
-  public void testCountSQL() {
-    final TestBlackliteReader runner = new TestBlackliteReader();
-    final CommandLine commandLine = new CommandLine(runner);
-    commandLine.execute("-c", "-s", "0", "-e", "1000", "-w", "level > 9000", archiveFile);
-
-    final QueryBuilder actual = runner.actualQueryBuilder;
-    final String sql = actual.createSQL();
-    assertThat(sql)
-        .isEqualTo(
-            "SELECT COUNT(*) FROM entries WHERE epoch_secs < ?  AND epoch_secs > ?  AND level > 9000");
+            "SELECT epoch_secs, nanos, level, content FROM entries WHERE epoch_secs < ?  AND epoch_secs > ?  AND level > 9000");
   }
 
   static class TestBlackliteReader extends BlackliteReader {
@@ -140,11 +117,6 @@ public class BlackliteReaderTest {
     @Override
     public void execute(QueryBuilder qb) {
       actualQueryBuilder = qb;
-    }
-
-    @Override
-    ResultConsumer createConsumer() {
-      return new DebugResultConsumer();
     }
   }
 }

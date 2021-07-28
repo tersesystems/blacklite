@@ -1,7 +1,7 @@
-///usr/bin/env jbang "$0" "$@" ; exit $?
+/// usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS info.picocli:picocli:4.5.0
 //DEPS com.tersesystems.blacklite:blacklite-reader:1.0.1
-//DEPS com.tersesystems.blacklite:blacklite-codec-zstd:1.0.1
+//DEPS com.tersesystems.blacklite:blacklite-core:1.0.1
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -15,63 +15,50 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import com.tersesystems.blacklite.reader.*;
+import com.tersesystems.blacklite.archiver.*;
+
+import java.nio.*;
 
 import java.lang.Runnable;
 
-@Command(name = "reader",
-        mixinStandardHelpOptions = true,
-        version = "reader 0.1",
-        description = "reader made with jbang")
+@Command(
+    name = "reader",
+    mixinStandardHelpOptions = true,
+    version = "reader 0.1",
+    description = "reader made with jbang")
 class reader implements Runnable {
 
-    @Parameters(paramLabel = "FILE", description = "one or more files to read")
-    File file;
+  @Parameters(paramLabel = "FILE", description = "one or more files to read")
+  File file;
 
-    @Option(
-        names = {"--charset"},
-        paramLabel = "CHARSET",
-        defaultValue = "utf8",
-        description = "Charset (default: ${DEFAULT-VALUE})")
-    Charset charset;
+  @Option(
+      names = {"--charset"},
+      paramLabel = "CHARSET",
+      defaultValue = "utf8",
+      description = "Charset (default: ${DEFAULT-VALUE})")
+  Charset charset;
 
-    @Option(
-        names = {"-c", "--count"},
-        paramLabel = "COUNT",
-        description = "Return a count of entries")
-    boolean count;
-
-    public static void main(String... args) {
-        final CommandLine commandLine = new CommandLine(new reader());
-        if (commandLine.isUsageHelpRequested()) {
-          commandLine.usage(System.out);
-          return;
-        } else if (commandLine.isVersionHelpRequested()) {
-          commandLine.printVersionHelp(System.out);
-          return;
-        }
-        System.exit(commandLine.execute(args));
+  public static void main(String... args) {
+    final CommandLine commandLine = new CommandLine(new reader());
+    if (commandLine.isUsageHelpRequested()) {
+      commandLine.usage(System.out);
+      return;
+    } else if (commandLine.isVersionHelpRequested()) {
+      commandLine.printVersionHelp(System.out);
+      return;
     }
+    System.exit(commandLine.execute(args));
+  }
 
-    public void run() {
-        QueryBuilder qb = new QueryBuilder();
+  public void run() {
+    QueryBuilder qb = new QueryBuilder();
 
-        if (count) {
-          qb.addCount(count);
-        }
-
-        execute(qb);
-      }
-
-    public void execute(QueryBuilder qb) {
-        try (Connection c = Database.createConnection(file)) {
-            ResultConsumer consumer = createConsumer();
-            qb.execute(c, consumer);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    try (Connection c = Database.createConnection(file)) {
+      qb.execute(c, false).forEach(entry ->
+        System.out.println(charset.decode(ByteBuffer.wrap(entry.getContent())))
+      );
+    } catch (SQLException e) {
+      e.printStackTrace();
     }
-
-    ResultConsumer createConsumer() {
-        return new PrintStreamResultConsumer(System.out, charset);
-    }
+  }
 }

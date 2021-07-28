@@ -7,6 +7,8 @@ import java.sql.SQLException;
 public class NoOpArchiver implements Archiver {
   private EntryStore entryStore;
 
+  public static final NoOpArchiver INSTANCE = new NoOpArchiver();
+
   @Override
   public EntryStore getEntryStore() {
     return this.entryStore;
