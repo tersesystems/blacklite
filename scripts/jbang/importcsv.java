@@ -54,8 +54,8 @@ class importcsv implements Callable<Integer> {
   @Override
   public Integer call() throws Exception {
     config.setFile(file);
-    config.setBatchInsertSize(1);
-    
+    config.setBatchInsertSize(1); // don't batch inserts here.
+
     Archiver archiver = new NoOpArchiver();
     String name = "blacklite";
 
