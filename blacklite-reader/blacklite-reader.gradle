@@ -19,6 +19,9 @@ task run(type: JavaExec, dependsOn: classes) {
 }
 
 dependencies {
+    implementation project(":blacklite-core")
+    implementation project(":blacklite-codec-zstd")
+
     // Get rid of some unneeded dependencies here
     implementation 'org.graylog2.repackaged:natty:0.8-1'
 

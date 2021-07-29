@@ -49,9 +49,9 @@ class importcsv implements Callable<Integer> {
 
   @Override
   public Integer call() throws Exception {
-    EntryStoreConfig config = new DefaultEntryStoreConfig();
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_INSTANT;
 
+    EntryStoreConfig config = new DefaultEntryStoreConfig();
     config.setFile(file);
     config.setBatchInsertSize(1); // don't batch inserts here.
 
