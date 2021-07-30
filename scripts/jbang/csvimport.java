@@ -23,27 +23,31 @@ import java.io.*;
 
 import java.util.concurrent.Callable;
 
-@Command(name = "importcsv", mixinStandardHelpOptions = true, version = "0.1",
+@Command(name = "csvimport", mixinStandardHelpOptions = true, version = "0.1",
         description = "import from CSV")
-class importcsv implements Callable<Integer> {
+class csvimport implements Callable<Integer> {
 
   @Parameters(paramLabel = "FILE", description = "the database to import into")
   String file;
 
-  @Parameters(paramLabel = "CSV", description = "CSV files to import")
+  @Parameters(paramLabel = "CSV", description = "Files to import")
   String csv;
+
+  // epoch_secs,nanos,level,content
+  @Parameters(paramLabel = "seconds", description = "Seconds Field", defaultValue = "epoch_secs")
+  String secondsField;
+
+  @Parameters(paramLabel = "nanos", description = "Nanos Field", defaultValue = "nanos")
+  String nanosField;
 
   @Parameters(paramLabel = "level", description = "Level Field", defaultValue = "level")
   String levelField;
-
-  @Parameters(paramLabel = "timestamp", description = "Timestamp Field", defaultValue = "timestamp_utc")
-  String timestampField;
 
   @Parameters(paramLabel = "content", description = "Content Field", defaultValue = "content")
   String contentField;
 
   public static void main(String... args) {
-    int exitCode = new CommandLine(new importcsv()).execute(args);
+    int exitCode = new CommandLine(new csvimport()).execute(args);
     System.exit(exitCode);
   }
 
@@ -62,9 +66,8 @@ class importcsv implements Callable<Integer> {
         Map<String, String> values;
 
         while ((values = reader.readMap()) != null) {
-          Instant ts = Instant.from(dateTimeFormatter.parse(values.get(timestampField)));
-          long epochSeconds = ts.getEpochSecond();
-          int nanos = ts.getNano();
+          long epochSeconds = Long.parseLong(values.get(secondsField));
+          int nanos = Integer.parseInt(values.get(nanosField));
           int level = Integer.parseInt(values.get(levelField));
           String content = values.get(contentField);
           byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
