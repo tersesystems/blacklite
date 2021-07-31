@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sqlite3
 from sqlite_utils import Database
 import zstandard as zstd
 
@@ -25,16 +26,23 @@ def tracer(sql, params):
 
 # https://sqlite-utils.datasette.io/en/stable/python-api.html
 db = Database("../data/blacklite.db", tracer=tracer)
+
+# If there are errors in the user defined function, this is the
+# only way to get the actual error and not
+# "user-defined function raised exception"
+sqlite3.enable_callback_tracebacks(True)
+
 cctx = zstd.ZstdCompressor()
 
 @db.register_function
 def compress(s):
-    return cctx.compress(s)
+    return cctx.compress(bytes(s, encoding='utf8'))
 
 try:
     db.attach("blacklite_zstd", "blacklite-zstd.db")
     db.execute("""
-    insert into blacklite_zstd.entries (epoch_secs, nanos, level, content) select epoch_secs, nanos, level, compress(content) from entries
+    insert into blacklite_zstd.entries (epoch_secs, nanos, level, content)
+    select epoch_secs, nanos, level, compress(content) from entries
     """)
 
     db.execute("COMMIT")

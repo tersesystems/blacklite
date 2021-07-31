@@ -4,14 +4,17 @@ from sqlite_utils import Database
 import time
 import json
 import zstandard as zstd
+import os.path
 
-db = Database("../data/blacklite_zstd_dict.db")
+dbpath = "./blacklite-zstd.db"
+if not os.path.exists(dbpath):
+    raise f'"No database found at {dbpath}'
+
+db = Database(dbpath)
 
 epoch_time = int(time.time())
 
-dict_row = db.execute("select dict_bytes from zstd_dicts LIMIT 1").fetchone()
-dict = zstd.ZstdCompressionDict(dict_row[0])
-dctx = zstd.ZstdDecompressor(dict_data = dict)
+dctx = zstd.ZstdDecompressor()
 
 for row in db["entries"].rows_where("epoch_secs < ? limit 1", [epoch_time]):
     epoch_secs = row['epoch_secs']
