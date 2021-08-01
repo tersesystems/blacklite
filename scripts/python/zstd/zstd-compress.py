@@ -4,14 +4,12 @@ import sqlite3
 from sqlite_utils import Database
 import zstandard as zstd
 
-#
-# This script takes in a database that have entries
-# compressed with zstandard compression and outputs
-# an uncompressed database.
-#
+source = "../data/blacklite.db"
+dest = "blacklite-zstd.db"
+
 
 def initialize():
-    cdb = Database("./blacklite-decompress.db")
+    cdb = Database(dest)
     cdb.execute("""CREATE TABLE IF NOT EXISTS entries (
       epoch_secs LONG,
       nanos INTEGER,
@@ -31,24 +29,24 @@ def tracer(sql, params):
     print("SQL: {} - params: {}".format(sql, params))
 
 # https://sqlite-utils.datasette.io/en/stable/python-api.html
-db = Database("./blacklite-zstd.db", tracer=tracer)
+db = Database(source, tracer=tracer)
 
 # If there are errors in the user defined function, this is the
 # only way to get the actual error and not
 # "user-defined function raised exception"
 sqlite3.enable_callback_tracebacks(True)
 
-dctx = zstd.ZstdDecompressor()
+cctx = zstd.ZstdCompressor()
 
 @db.register_function
-def decompress(s):
-    return dctx.decompress(s)
+def compress(s):
+    return cctx.compress(bytes(s, encoding='utf8'))
 
 try:
-    db.attach("decompress", "decompress.db")
+    db.attach("blacklite_zstd", dest)
     db.execute("""
-    insert into decompress.entries (epoch_secs, nanos, level, content)
-    select epoch_secs, nanos, level, decompress(content) from entries
+    insert into blacklite_zstd.entries (epoch_secs, nanos, level, content)
+    select epoch_secs, nanos, level, compress(content) from entries
     """)
 
     db.execute("COMMIT")

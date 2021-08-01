@@ -13,8 +13,12 @@ import zstandard as zstd
 # compressed content.
 #
 
+source = "../data/blacklite.db"
+dest = "./blacklite-zstd-dict.db"
+
+
 def initialize():
-    cdb = Database("./blacklite-zstd-dict.db")
+    cdb = Database(dest)
     cdb.execute("""CREATE TABLE IF NOT EXISTS entries (
       epoch_secs LONG,
       nanos INTEGER,
@@ -54,7 +58,7 @@ initialize()
 sqlite3.enable_callback_tracebacks(True)
 
 # https://sqlite-utils.datasette.io/en/stable/python-api.html
-db = Database("../data/blacklite.db") # tracer=tracer
+db = Database(source) # tracer=tracer
 
 zstd_dict = create_dictionary(db)
 cctx = zstd.ZstdCompressor(dict_data=zstd_dict)

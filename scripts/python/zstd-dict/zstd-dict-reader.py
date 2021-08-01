@@ -4,7 +4,10 @@ from sqlite_utils import Database
 import time
 import zstandard as zstd
 
-db = Database("../data/blacklite_zstd_dict.db")
+
+source = "../data/blacklite_zstd_dict.db"
+
+db = Database(source)
 
 epoch_time = int(time.time())
 
