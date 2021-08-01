@@ -2,6 +2,7 @@
 
 import sqlite3
 
+import os.path
 from sqlite_utils import Database
 import zstandard as zstd
 
@@ -15,6 +16,9 @@ import zstandard as zstd
 
 source = "../data/blacklite.db"
 dest = "./blacklite-zstd-dict.db"
+
+if not os.path.exists(source):
+    raise f'"No source database found at {source}'
 
 
 def initialize():

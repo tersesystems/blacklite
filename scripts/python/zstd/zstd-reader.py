@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+
+import os.path
 from sqlite_utils import Database
 import time
 import json

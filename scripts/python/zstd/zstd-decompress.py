@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os.path
 import sqlite3
 from sqlite_utils import Database
 import zstandard as zstd
@@ -11,9 +12,13 @@ import zstandard as zstd
 #
 
 source = "./blacklite-zstd.db"
+if not os.path.exists(source):
+    raise f'"No source database found at {source}'
 
 dest = "./blacklite-decompress.db"
 
+if not os.path.exists(source):
+    raise f'"No source database found at {source}'
 
 def initialize():
     cdb = Database(dest)

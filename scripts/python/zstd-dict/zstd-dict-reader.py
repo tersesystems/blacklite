@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
+import os.path
 from sqlite_utils import Database
 import time
+import json
 import zstandard as zstd
 
 
 source = "../data/blacklite_zstd_dict.db"
+if not os.path.exists(source):
+    raise f'"No source database found at {source}'
 
 db = Database(source)
 
@@ -30,5 +34,6 @@ row = db.execute(sql).fetchone()
 
 ts = row[0]
 message = row[1]
-decoded = row[2]
-print("ts = ", ts, "message = ", message, "decoded = ", decoded)
+content = json.loads(row[2])
+
+print("ts = ", ts, "message = ", message, "content = ", content)
