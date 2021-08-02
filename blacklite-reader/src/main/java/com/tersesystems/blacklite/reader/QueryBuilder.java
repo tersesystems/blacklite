@@ -5,14 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-class QueryBuilder {
+public class QueryBuilder {
 
   private String whereString;
   private Instant before;
   private Instant after;
   private int boundParams = 0;
-  private boolean count;
 
   public void addBefore(Instant before) {
     this.boundParams += 1;
@@ -28,11 +29,7 @@ class QueryBuilder {
     this.whereString = whereString.trim();
   }
 
-  public void addCount(boolean count) {
-    this.count = count;
-  }
-
-  public void execute(Connection c, ResultConsumer consumer, boolean verbose) throws SQLException {
+  public Stream<LogEntry> execute(Connection c, boolean verbose) throws SQLException {
     final String statement = createSQL();
 
     if (verbose) {
@@ -49,31 +46,15 @@ class QueryBuilder {
         ps.setLong(adder, after.getEpochSecond());
       }
 
-      try (final ResultSet rs = ps.executeQuery()) {
-        if (count) {
-          if (rs.next()) {
-            consumer.count(rs.getLong(1));
-          }
-        }
-
-        while (rs.next()) {
-          final byte[] content = rs.getBytes("content");
-          consumer.print(content);
-        }
-      }
+      final ResultSet rs = ps.executeQuery();
+      final LogEntrySpliterator logEntrySpliterator = new LogEntrySpliterator(rs);
+      return StreamSupport.stream(logEntrySpliterator, false);
     }
   }
 
   String createSQL() {
     StringBuilder sb = new StringBuilder();
-    if (count) {
-      // SQLite does a full table scan for count.  We'd like to use
-      // MAX(_rowid_) but that's not enough to cover the custom
-      // WHERE clause case.
-      sb.append("SELECT COUNT(*) FROM entries");
-    } else {
-      sb.append("SELECT content FROM entries");
-    }
+    sb.append("SELECT epoch_secs, nanos, level, content FROM entries");
 
     if (boundParams > 0 || whereString != null) {
       sb.append(" WHERE ");
@@ -113,10 +94,6 @@ class QueryBuilder {
 
   public void verbosePrint(String s) {
     System.err.println(s);
-  }
-
-  boolean getCount() {
-    return count;
   }
 
   Instant getBefore() {

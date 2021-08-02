@@ -1,10 +1,14 @@
 package com.tersesystems.blacklite.reader;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Instant;
 import java.util.TimeZone;
+import java.util.stream.Stream;
+
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -72,12 +76,6 @@ public class BlackliteReader implements Runnable {
   }
 
   @Option(
-      names = {"-c", "--count"},
-      paramLabel = "COUNT",
-      description = "Return a count of entries")
-  boolean count;
-
-  @Option(
       names = {"-v", "--verbose"},
       paramLabel = "VERBOSE",
       description = "Print verbose logging")
@@ -124,38 +122,31 @@ public class BlackliteReader implements Runnable {
   public void run() {
     QueryBuilder qb = new QueryBuilder();
 
-    if (count) {
-      qb.addCount(count);
-    }
-
     DateParser dateParser = new DateParser(timezone);
     if (beforeTime != null) {
       Instant before;
-      if (beforeTime.beforeString != null) {
+      final String beforeString = beforeTime.beforeString;
+      if (beforeString != null) {
         before =
             dateParser
-                .parse(beforeTime.beforeString)
+                .parse(beforeString)
                 .orElseThrow(
-                    () ->
-                        new IllegalStateException(
-                            "Cannot parse before string: " + beforeTime.beforeString));
+                    () -> new IllegalStateException("Cannot parse before string: " + beforeString));
       } else {
         before = Instant.ofEpochSecond(beforeTime.beforeEpoch);
       }
-
       qb.addBefore(before);
     }
 
     if (afterTime != null) {
+      final String afterString = afterTime.afterString;
       Instant after;
-      if (afterTime.afterString != null) {
+      if (afterString != null) {
         after =
             dateParser
-                .parse(afterTime.afterString)
+                .parse(afterString)
                 .orElseThrow(
-                    () ->
-                        new IllegalStateException(
-                            "Cannot parse after string: " + afterTime.afterString));
+                    () -> new IllegalStateException("Cannot parse after string: " + afterString));
       } else {
         after = Instant.ofEpochSecond(afterTime.afterEpoch);
       }
@@ -171,18 +162,13 @@ public class BlackliteReader implements Runnable {
 
   public void execute(QueryBuilder qb) {
     try (Connection c = Database.createConnection(file)) {
-      ResultConsumer consumer = createConsumer();
-      qb.execute(c, consumer, verbose);
+      Stream<LogEntry> entryStream = qb.execute(c, verbose);
+      entryStream.forEach(
+          entry -> {
+            System.out.println(charset.decode(ByteBuffer.wrap(entry.getContent())));
+          });
     } catch (SQLException e) {
       e.printStackTrace();
-    }
-  }
-
-  ResultConsumer createConsumer() {
-    if (binary) {
-      return new PrintStreamResultConsumer(System.out, null);
-    } else {
-      return new PrintStreamResultConsumer(System.out, charset);
     }
   }
 }
