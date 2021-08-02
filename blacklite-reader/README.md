@@ -71,3 +71,5 @@ You can also extract data using the `binary` flag and redirect to a file, which 
 ./blacklite-reader --binary /tmp/blacklite/archive.db > zarchive.zst
 zstd -d zarchive.zst
 ```
+
+Or you can use one of the python scripts to create a decompressed database.

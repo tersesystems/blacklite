@@ -6,7 +6,12 @@ import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** The main rifter action. */
+/**
+ * An abstract writer.
+ *
+ * This writer does not depend on a particular logging framework and so can be used
+ * as a stable base for logging functionality.
+ */
 public abstract class AbstractEntryWriter implements EntryWriter {
   protected final ArchiveTask archiveTask;
   protected final StatusReporter statusReporter;

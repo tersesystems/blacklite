@@ -4,7 +4,12 @@ import com.tersesystems.blacklite.archive.Archiver;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.LongAdder;
 
-/** A simple rifter that writes directly to the live repository. */
+/**
+ * A simple blocking writer that writes directly to the live repository.
+ *
+ * This is useful in situations like bulk loads, testing, and when it's
+ * not acceptable to lose log entries in processing.
+ */
 public class BlockingEntryWriter extends AbstractEntryWriter {
 
   private final LongAdder adder = new LongAdder();

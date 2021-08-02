@@ -54,7 +54,7 @@ public class BlockingEntryWriterBenchmark {
     final FakeEntryStore fakeEntryStore = new FakeEntryStore();
     Archiver archiver = new NoOpArchiver();
     this.blacklite =
-        new BlockingEntryWriter(StatusReporter.DEFAULT, config, archiver, "rifter-appender") {
+        new BlockingEntryWriter(StatusReporter.DEFAULT, config, archiver, "blacklite-appender") {
           @Override
           protected EntryStore createEntryStore(EntryStoreConfig config) throws SQLException {
             return fakeEntryStore;

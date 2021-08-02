@@ -62,7 +62,7 @@ WHERE content IS NOT NULL ORDER BY epoch_secs ASC LIMIT 0, 100;
 ```
 
 ```
-6940072|2020-10-10 19:08:58|679000000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.rifter.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
+6940072|2020-10-10 19:08:58|679000000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.blacklite.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
 ```
 
 You can select from a specific rowid:
@@ -74,7 +74,7 @@ SELECT _rowid_,* from entries where _rowid_ = 6940072;
 and get back:
 
 ```
-6940072|1602382138|679000000|30000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.rifter.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
+6940072|1602382138|679000000|30000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.blacklite.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
 |
 ```
 
@@ -114,9 +114,9 @@ and you can search through messages:
 
 ```
 sqlite> SELECT _rowid_,* FROM entries WHERE json_extract(content,'$.message') LIKE '%08:58.679486Z';
-6940072|1602382138|679000000|30000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.rifter.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
+6940072|1602382138|679000000|30000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.blacklite.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
 |
-6940073|1602382138|679000000|30000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.rifter.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
+6940073|1602382138|679000000|30000|{"@timestamp":"2020-10-10T19:08:58.679-07:00","@version":"1","message":"debugging is fun!!! 2020-10-11T02:08:58.679486Z","logger_name":"com.tersesystems.blacklite.logback.Main","thread_name":"main","level":"WARN","level_value":30000}
 |
 sqlite>
 ```
@@ -126,19 +126,19 @@ Note we get back two rows here.  This is because the nanotime resolution is not 
 You can also query from the command line:
 
 ```bash
-sqlite3 ./rifter.db "SELECT json_extract(content,'$.message') FROM entries WHERE _rowid_ = 6940072"
+sqlite3 ./blacklite.db "SELECT json_extract(content,'$.message') FROM entries WHERE _rowid_ = 6940072"
 debugging is fun!!! 2020-10-11T02:08:58.679486Z
 ```
 
 or you can extract the JSON directly to stdout and pass it through `jq`:
 
 ```bash
-❱ sqlite3 ./rifter.db  "SELECT content FROM entries WHERE content IS NOT NULL LIMIT 1" | jq
+❱ sqlite3 ./blacklite.db  "SELECT content FROM entries WHERE content IS NOT NULL LIMIT 1" | jq
 {
   "@timestamp": "2020-10-10T19:08:58.679-07:00",
   "@version": "1",
   "message": "debugging is fun!!! 2020-10-11T02:08:58.679444Z",
-  "logger_name": "com.tersesystems.rifter.logback.Main",
+  "logger_name": "com.tersesystems.blacklite.logback.Main",
   "thread_name": "main",
   "level": "WARN",
   "level_value": 30000
@@ -150,7 +150,7 @@ or you can extract the JSON directly to stdout and pass it through `jq`:
 For compressed content, blobs can be written out as files on the filesystem and then decompressed.
 
 ```bash
-sqlite3 rifter.db "SELECT writefile('1.zst', content) FROM entries WHERE _rowid_ = 1"
+sqlite3 blacklite.db "SELECT writefile('1.zst', content) FROM entries WHERE _rowid_ = 1"
 ```
 
 If you look at the file with `vi`, you'll see plain text.  This is because vi is smart enough to autodecode for you. Don't be deceived, it's actually still zstandard:
