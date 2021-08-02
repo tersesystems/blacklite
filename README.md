@@ -65,7 +65,9 @@ Providing data in SQLite format means you can leverage tools built using SQLite.
 
 There are scripts available for manipulating SQLite in REPL environments and processing through small programs in JSON.
 
-More details on [querying SQLite using Python and sqlite3 here](SQLITE.md).
+See the [jbang scripts](scripts/jbang/README.md) and the [Python scripts](scripts/jbang/README.md) for more detail.
+
+Also you can work with sqlite [directly](SQLITE.md).
 
 ## Installation
 
