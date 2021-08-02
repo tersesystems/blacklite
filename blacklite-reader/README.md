@@ -2,11 +2,14 @@
 
 There's a command line blacklite reader that can return the contents given parameters.
 
+You need to download the JAR, using [search.maven.org](https://search.maven.org/artifact/com.tersesystems.blacklite/blacklite-reader).
+
 You can run it from the command line using the JAR:
 
 ```
-export BLACKLITE_VERSION=0.1.0-SNAPSHOT
-java -jar $HOME/.m2/repository/com/tersesystems/blacklite/blacklite-reader/$BLACKLITE_VERSION/blacklite-reader-$BLACKLITE_VERSION-all.jar $*;
+export VERSION=1.0.1
+wget https://repo1.maven.org/maven2/com/tersesystems/blacklite/blacklite-reader/$VERSION/blacklite-reader-$VERSION-all.jar
+java -jar blacklite-reader-$VERSION-all.jar $*;
 ```
 
 but it's probably easier to wrap it in a bash script, like `blacklite-reader`.
