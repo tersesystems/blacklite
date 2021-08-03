@@ -10,7 +10,6 @@ import ch.qos.logback.core.encoder.Encoder;
 import com.tersesystems.blacklite.*;
 import com.tersesystems.blacklite.archive.Archiver;
 import com.tersesystems.blacklite.archive.DeletingArchiver;
-import com.tersesystems.blacklite.archive.TriggeringPolicy;
 import java.util.Properties;
 
 /** A logback appender using blacklite as a backend. */
@@ -21,8 +20,6 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   private Encoder<ILoggingEvent> encoder;
   private EntryWriter entryWriter;
   private Archiver archiver;
-
-  private TriggeringPolicy triggeringPolicy;
 
   public Encoder<ILoggingEvent> getEncoder() {
     return encoder;
