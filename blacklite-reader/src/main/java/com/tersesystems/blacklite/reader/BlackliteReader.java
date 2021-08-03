@@ -3,12 +3,15 @@ package com.tersesystems.blacklite.reader;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Instant;
 import java.util.TimeZone;
 import java.util.stream.Stream;
 
+import com.tersesystems.blacklite.StatusReporter;
+import com.tersesystems.blacklite.codec.Codec;
+import com.tersesystems.blacklite.codec.zstd.ZStdDictSqliteRepository;
+import com.tersesystems.blacklite.codec.zstd.ZstdDictCodec;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -120,55 +123,65 @@ public class BlackliteReader implements Runnable {
   }
 
   public void run() {
-    QueryBuilder qb = new QueryBuilder();
 
-    DateParser dateParser = new DateParser(timezone);
-    if (beforeTime != null) {
-      Instant before;
-      final String beforeString = beforeTime.beforeString;
-      if (beforeString != null) {
-        before =
-            dateParser
-                .parse(beforeString)
-                .orElseThrow(
-                    () -> new IllegalStateException("Cannot parse before string: " + beforeString));
-      } else {
-        before = Instant.ofEpochSecond(beforeTime.beforeEpoch);
-      }
-      qb.addBefore(before);
-    }
-
-    if (afterTime != null) {
-      final String afterString = afterTime.afterString;
-      Instant after;
-      if (afterString != null) {
-        after =
-            dateParser
-                .parse(afterString)
-                .orElseThrow(
-                    () -> new IllegalStateException("Cannot parse after string: " + afterString));
-      } else {
-        after = Instant.ofEpochSecond(afterTime.afterEpoch);
-      }
-      qb.addAfter(after);
-    }
-
-    if (whereString != null) {
-      qb.addWhere(whereString);
-    }
-
-    execute(qb);
-  }
-
-  public void execute(QueryBuilder qb) {
+    StatusReporter statusReporter = StatusReporter.DEFAULT;
     try (Connection c = Database.createConnection(file)) {
+      Codec codec = defaultCodec(statusReporter);
+      QueryBuilder qb = new QueryBuilder(codec);
+
+      DateParser dateParser = new DateParser(timezone);
+      if (beforeTime != null) {
+        Instant before;
+        final String beforeString = beforeTime.beforeString;
+        if (beforeString != null) {
+          before =
+            dateParser
+              .parse(beforeString)
+              .orElseThrow(
+                () -> new IllegalStateException("Cannot parse before string: " + beforeString));
+        } else {
+          before = Instant.ofEpochSecond(beforeTime.beforeEpoch);
+        }
+        qb.addBefore(before);
+      }
+
+      if (afterTime != null) {
+        final String afterString = afterTime.afterString;
+        Instant after;
+        if (afterString != null) {
+          after =
+            dateParser
+              .parse(afterString)
+              .orElseThrow(
+                () -> new IllegalStateException("Cannot parse after string: " + afterString));
+        } else {
+          after = Instant.ofEpochSecond(afterTime.afterEpoch);
+        }
+        qb.addAfter(after);
+      }
+
+      if (whereString != null) {
+        qb.addWhere(whereString);
+      }
+
       Stream<LogEntry> entryStream = qb.execute(c, verbose);
-      entryStream.forEach(
-          entry -> {
-            System.out.println(charset.decode(ByteBuffer.wrap(entry.getContent())));
-          });
+      entryStream
+        .map(LogEntry::getContent)
+        .map(content -> charset.decode(ByteBuffer.wrap(content)))
+        .forEach(System.out::println);
     } catch (SQLException e) {
-      e.printStackTrace();
+      statusReporter.addError("Cannot complete query", e);
     }
   }
+
+  protected Codec defaultCodec(StatusReporter statusReporter) {
+    final ZStdDictSqliteRepository dictRepo = new ZStdDictSqliteRepository();
+    dictRepo.setFile(file.getAbsolutePath());
+    dictRepo.initialize();
+    final ZstdDictCodec zstdDictCodec = new ZstdDictCodec();
+    zstdDictCodec.setRepository(dictRepo);
+    zstdDictCodec.initialize(statusReporter);
+    return zstdDictCodec;
+  }
+
 }

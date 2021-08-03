@@ -121,7 +121,7 @@ public class RollingArchiver extends AbstractArchiver implements FileArchiver {
     final Path archivePath = Paths.get(getFile());
 
     // Create the archive database if it doesn't already exist
-    String archiveUrl = "jdbc:sqlite:" + archivePath.toString();
+    String archiveUrl = "jdbc:sqlite:" + archivePath;
     try (Connection archiveConn = JDBC.createConnection(archiveUrl, getProperties())) {
       try (Statement stmt = archiveConn.createStatement()) {
         stmt.execute(statements().createEntriesTable());
@@ -133,7 +133,7 @@ public class RollingArchiver extends AbstractArchiver implements FileArchiver {
     boolean success = false;
     try {
       try (Statement st = conn.createStatement()) {
-        String attach = String.format(statements().attachFormat(), archivePath.toString());
+        String attach = String.format(statements().attachFormat(), archivePath);
         st.execute(attach);
       }
 

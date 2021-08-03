@@ -2,13 +2,14 @@ package com.tersesystems.blacklite.reader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.Connection;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 public class BlackliteReaderTest {
 
-  private String archiveFile = "/some/random/file";
+  private final String archiveFile = "/some/random/file";
 
   @Test
   public void testBefore() {
@@ -113,10 +114,5 @@ public class BlackliteReaderTest {
 
   static class TestBlackliteReader extends BlackliteReader {
     QueryBuilder actualQueryBuilder;
-
-    @Override
-    public void execute(QueryBuilder qb) {
-      actualQueryBuilder = qb;
-    }
   }
 }

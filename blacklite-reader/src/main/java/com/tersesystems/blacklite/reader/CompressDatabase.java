@@ -12,6 +12,7 @@ import com.tersesystems.blacklite.StatusReporter;
 import com.tersesystems.blacklite.archive.Archiver;
 import com.tersesystems.blacklite.archive.NoOpArchiver;
 import com.tersesystems.blacklite.codec.Codec;
+import com.tersesystems.blacklite.codec.identity.IdentityCodec;
 import com.tersesystems.blacklite.codec.zstd.ZStdCodec;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;

@@ -3,11 +3,14 @@ package com.tersesystems.blacklite.codec.zstd;
 import com.github.luben.zstd.*;
 import com.tersesystems.blacklite.StatusReporter;
 import com.tersesystems.blacklite.codec.Codec;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-/** ZStandard compression. */
+/**
+ * ZStandard compression with dictionary compression training.
+ */
 public class ZstdDictCodec implements Codec {
 
   // The sample size is the sum of the individual samples,
@@ -65,8 +68,20 @@ public class ZstdDictCodec implements Codec {
 
   public byte[] decode(byte[] compressed) {
     if (compressed == null) return null;
+    // XXX if it's not compressed at all then return the original
     int i = (int) Zstd.decompressedSize(compressed);
-    return decompressCtx.decompress(compressed, i);
+    final long dictIdFromDict = Zstd.getDictIdFromDict(compressed);
+    if (dictIdFromDict == 0) {
+      return decompressCtx.decompress(compressed, i);
+    } else {
+      // XXX should cache this so we don't have to do look up repeatedly
+      final Optional<ZstdDict> lookup = repository.lookup(dictIdFromDict);
+      if (lookup.isEmpty()) {
+        throw new NoDictionaryFoundException("No dictionary found for dictId", dictIdFromDict);
+      }
+      final ZstdDict zstdDict = lookup.get();
+      return Zstd.decompress(compressed, zstdDict.getBytes(), i);
+    }
   }
 
   @Override

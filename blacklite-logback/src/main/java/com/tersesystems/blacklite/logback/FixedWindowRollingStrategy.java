@@ -21,7 +21,7 @@ public class FixedWindowRollingStrategy extends ContextAwareBase
       "Please refer to " + CODES_URL + "#fwrp_parentFileName_not_set";
 
   /** It's almost always a bad idea to have a large window size, say over 20. */
-  private static int MAX_WINDOW_SIZE = 20;
+  private static final int MAX_WINDOW_SIZE = 20;
 
   FileNamePattern fileNamePattern;
   // fileNamePatternStr is always slashified, see setter

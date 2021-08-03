@@ -84,7 +84,7 @@ public class DefaultEntryStoreTest {
 
   long getMaxRow(Connection connection) throws SQLException {
     try (Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT MAX(_rowid_) FROM entries"); ) {
+        ResultSet rs = stmt.executeQuery("SELECT MAX(_rowid_) FROM entries")) {
       rs.next();
       return rs.getLong(1);
     }
