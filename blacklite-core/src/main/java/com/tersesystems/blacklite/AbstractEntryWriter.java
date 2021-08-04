@@ -3,7 +3,6 @@ package com.tersesystems.blacklite;
 import com.tersesystems.blacklite.archive.Archiver;
 import java.sql.SQLException;
 import java.util.Objects;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**

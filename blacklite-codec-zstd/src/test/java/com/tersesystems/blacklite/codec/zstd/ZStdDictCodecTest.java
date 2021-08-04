@@ -24,13 +24,14 @@ public class ZStdDictCodecTest {
     // Path directoryPath = Files.createTempDirectory("blacklite");
     // final Path dictionaryPath = directoryPath.resolve("dictionary");
     // ZstdDictFileRepository dictRepository = new ZstdDictFileRepository();
-    ZstdDictCodec codec = new ZstdDictCodec();
-    codec.setRepository(repo);
-    codec.initialize(StatusReporter.DEFAULT);
+    try (ZstdDictCodec codec = new ZstdDictCodec()) {
+      codec.setRepository(repo);
+      codec.initialize(StatusReporter.DEFAULT);
 
-    byte[] compressed = codec.encode(bytes);
-    byte[] decompressed = codec.decode(compressed);
+      byte[] compressed = codec.encode(bytes);
+      byte[] decompressed = codec.decode(compressed);
 
-    assertThat(decompressed.length).isEqualTo(bytes.length);
+      assertThat(decompressed.length).isEqualTo(bytes.length);
+    }
   }
 }

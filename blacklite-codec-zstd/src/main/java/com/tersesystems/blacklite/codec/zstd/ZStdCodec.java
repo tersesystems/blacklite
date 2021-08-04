@@ -6,7 +6,7 @@ import com.github.luben.zstd.ZstdDecompressCtx;
 import com.tersesystems.blacklite.StatusReporter;
 import com.tersesystems.blacklite.codec.Codec;
 
-public class ZStdCodec implements Codec, AutoCloseable {
+public class ZStdCodec implements Codec {
 
   private final ZstdCompressCtx compressCtx = new ZstdCompressCtx();
   private final ZstdDecompressCtx decompressCtx = new ZstdDecompressCtx();
