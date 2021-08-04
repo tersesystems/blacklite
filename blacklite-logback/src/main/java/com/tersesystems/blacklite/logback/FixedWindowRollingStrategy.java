@@ -9,7 +9,6 @@ import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
 import ch.qos.logback.core.rolling.helper.RenameUtil;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
-import com.tersesystems.blacklite.archive.Archiver;
 import com.tersesystems.blacklite.archive.FileArchiver;
 import com.tersesystems.blacklite.archive.RollingStrategy;
 import java.io.File;
@@ -33,7 +32,6 @@ public class FixedWindowRollingStrategy extends ContextAwareBase
   RenameUtil util = new RenameUtil();
 
   private volatile boolean started;
-  private Archiver archiver;
 
   public void setFileNamePattern(String fnp) {
     fileNamePatternStr = fnp;
