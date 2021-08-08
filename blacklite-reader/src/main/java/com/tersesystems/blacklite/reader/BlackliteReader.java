@@ -10,8 +10,10 @@ import java.util.stream.Stream;
 
 import com.tersesystems.blacklite.StatusReporter;
 import com.tersesystems.blacklite.codec.Codec;
+import com.tersesystems.blacklite.codec.identity.IdentityCodec;
 import com.tersesystems.blacklite.codec.zstd.ZStdDictSqliteRepository;
-import com.tersesystems.blacklite.codec.zstd.ZstdDictCodec;
+import com.tersesystems.blacklite.codec.zstd.ZStdUtils;
+import com.tersesystems.blacklite.codec.zstd.ZStdDictCodec;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -126,7 +128,7 @@ public class BlackliteReader implements Runnable {
 
     StatusReporter statusReporter = StatusReporter.DEFAULT;
     try (Connection c = Database.createConnection(file)) {
-      Codec codec = defaultCodec(statusReporter);
+      Codec codec = defaultCodec(statusReporter, c);
       QueryBuilder qb = new QueryBuilder(codec);
 
       DateParser dateParser = new DateParser(timezone);
@@ -174,11 +176,31 @@ public class BlackliteReader implements Runnable {
     }
   }
 
-  protected Codec defaultCodec(StatusReporter statusReporter) {
+  private Codec defaultCodec(StatusReporter statusReporter, Connection c) throws SQLException {
+    try (PreparedStatement ps = c.prepareStatement("SELECT content FROM entries LIMIT 1")) {
+      try (ResultSet resultSet = ps.executeQuery()) {
+        if (resultSet.first()) {
+          final byte[] contentBytes = resultSet.getBytes(0);
+          if (ZStdUtils.isFrame(contentBytes)) {
+            return zstdDictCodec(statusReporter);
+          }
+        }
+      }
+    }
+
+    // no rows?  no problem.
+    return identityCodec();
+  }
+
+  protected Codec identityCodec() {
+    return new IdentityCodec();
+  }
+
+  protected Codec zstdDictCodec(StatusReporter statusReporter) {
     final ZStdDictSqliteRepository dictRepo = new ZStdDictSqliteRepository();
     dictRepo.setFile(file.getAbsolutePath());
     dictRepo.initialize();
-    final ZstdDictCodec zstdDictCodec = new ZstdDictCodec();
+    final ZStdDictCodec zstdDictCodec = new ZStdDictCodec();
     zstdDictCodec.setRepository(dictRepo);
     zstdDictCodec.initialize(statusReporter);
     return zstdDictCodec;

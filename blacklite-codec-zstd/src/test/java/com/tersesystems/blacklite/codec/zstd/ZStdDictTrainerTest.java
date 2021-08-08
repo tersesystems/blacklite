@@ -31,7 +31,7 @@ public class ZStdDictTrainerTest {
         };
 
     // https://github.com/luben/zstd-jni/blob/master/src/test/scala/ZstdDict.scala
-    ZstdDictTrainer trainer = new ZstdDictTrainer(sampleSize, dictSize, consumer);
+    ZStdDictTrainer trainer = new ZStdDictTrainer(sampleSize, dictSize, consumer);
     for (int i = 0; i < sampleSize; i++) {
       byte[] input =
           ("Message " + i + " at " + System.currentTimeMillis()).getBytes(StandardCharsets.UTF_8);

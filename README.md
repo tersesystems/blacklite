@@ -242,7 +242,7 @@ Blacklite will automatically train a dictionary from the incoming content if it 
 tweak the dictionary parameters, but the defaults work fine.
 
 ```xml
-<codec class="com.tersesystems.blacklite.codec.zstd.ZstdDictCodec">
+<codec class="com.tersesystems.blacklite.codec.zstd.ZStdDictCodec">
 <level>9</level>
   <repository class="com.tersesystems.blacklite.codec.zstd.ZstdDictFileRepository">
     <file>logs/dictionary</file>

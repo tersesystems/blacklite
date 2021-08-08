@@ -6,6 +6,8 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
+import static com.tersesystems.blacklite.reader.Database.Entries.*;
+
 /**
  * A log entry spliterator.  This is not thread safe.
  */
@@ -22,7 +24,7 @@ public class LogEntrySpliterator extends Spliterators.AbstractSpliterator<LogEnt
   @Override
   public boolean tryAdvance(Consumer<? super LogEntry> action) {
     if (next()) {
-      LogEntry logEntry = createLogEntry(resultSet);
+      LogEntry logEntry = setLogEntry(resultSet);
       action.accept(logEntry);
       return true;
     } else {
@@ -30,14 +32,14 @@ public class LogEntrySpliterator extends Spliterators.AbstractSpliterator<LogEnt
     }
   }
 
-  private LogEntry createLogEntry(ResultSet resultSet) {
+  private LogEntry setLogEntry(ResultSet resultSet) {
     try {
-      long epochSecs = resultSet.getLong("epoch_secs");
-      int nanos = resultSet.getInt("nanos");
-      int level = resultSet.getInt("level");
-      byte[] bytes = resultSet.getBytes("content");
+      long epochSecs = resultSet.getLong(EPOCH_SECS);
+      int nanos = resultSet.getInt(NANOS);
+      int level = resultSet.getInt(LEVEL);
+      byte[] bytes = resultSet.getBytes(CONTENT);
 
-      return logEntry.write(epochSecs, nanos, level, bytes);
+      return logEntry.set(epochSecs, nanos, level, bytes);
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }

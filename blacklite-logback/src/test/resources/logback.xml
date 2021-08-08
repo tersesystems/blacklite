@@ -23,7 +23,7 @@
             <file>/tmp/blacklite-logback/archive.db</file>
             <archiveAfterRows>10000</archiveAfterRows>
 
-            <codec class="com.tersesystems.blacklite.codec.zstd.ZstdDictCodec">
+            <codec class="com.tersesystems.blacklite.codec.zstd.ZStdDictCodec">
                 <level>9</level>
                 <dictionary class="com.tersesystems.blacklite.codec.zstd.ZstdDictFileRepository">
                     <file>/tmp/blacklite-logback/dictionary</file>

@@ -1,6 +1,6 @@
 package com.tersesystems.blacklite.codec.zstd;
 
-public class NoDictionaryFoundException extends ZstdCodecException {
+public class NoDictionaryFoundException extends ZStdCodecException {
 
   private long dictId;
 

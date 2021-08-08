@@ -2,12 +2,12 @@ package com.tersesystems.blacklite.codec.zstd;
 
 import com.tersesystems.blacklite.codec.CodecException;
 
-public class ZstdDict {
+public class ZStdDict {
 
   private final long id;
   private final byte[] dictBytes;
 
-  public ZstdDict(long dictId, byte[] dictBytes) throws CodecException {
+  public ZStdDict(long dictId, byte[] dictBytes) throws CodecException {
     if (dictId == 0) {
       throw new CodecException("No dictionary found from bytes!");
     }

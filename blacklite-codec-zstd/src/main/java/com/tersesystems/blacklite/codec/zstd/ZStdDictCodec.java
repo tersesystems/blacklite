@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 /**
  * ZStandard compression with dictionary compression training.
  */
-public class ZstdDictCodec implements Codec {
+public class ZStdDictCodec implements Codec {
 
   // The sample size is the sum of the individual samples,
   // i.e. if you have 1000 messages that are all 26 bytes each,
@@ -27,10 +27,10 @@ public class ZstdDictCodec implements Codec {
   private final ZstdDecompressCtx decompressCtx = new ZstdDecompressCtx();
 
   private ZstdDictRepository repository;
-  private ZstdDictTrainer trainer;
+  private ZStdDictTrainer trainer;
   private StatusReporter statusReporter;
 
-  public ZstdDictCodec() {}
+  public ZStdDictCodec() {}
 
   @Override
   public void initialize(StatusReporter statusReporter) {
@@ -39,7 +39,7 @@ public class ZstdDictCodec implements Codec {
 
     this.statusReporter = statusReporter;
     this.compressCtx.setLevel(level);
-    Optional<ZstdDict> maybe = repository.mostRecent();
+    Optional<ZStdDict> maybe = repository.mostRecent();
     if (maybe.isPresent()) {
       byte[] dict = maybe.get().getBytes();
       trainer = null;
@@ -53,7 +53,7 @@ public class ZstdDictCodec implements Codec {
             compressCtx.loadDict(dbytes);
             decompressCtx.loadDict(dbytes);
           };
-      this.trainer = new ZstdDictTrainer(sampleSize, dictSize, consumer);
+      this.trainer = new ZStdDictTrainer(sampleSize, dictSize, consumer);
     }
   }
 
@@ -67,21 +67,20 @@ public class ZstdDictCodec implements Codec {
   }
 
   public byte[] decode(byte[] compressed) {
-    if (compressed == null) return null;
-    // XXX if it's not compressed at all then return the original
     int i = (int) Zstd.decompressedSize(compressed);
     final long dictIdFromDict = Zstd.getDictIdFromDict(compressed);
     if (dictIdFromDict == 0) {
       return decompressCtx.decompress(compressed, i);
     } else {
       // XXX should cache this so we don't have to do look up repeatedly
-      final Optional<ZstdDict> lookup = repository.lookup(dictIdFromDict);
+      final Optional<ZStdDict> lookup = repository.lookup(dictIdFromDict);
       if (lookup.isEmpty()) {
         throw new NoDictionaryFoundException("No dictionary found for dictId", dictIdFromDict);
       }
-      final ZstdDict zstdDict = lookup.get();
+      final ZStdDict zstdDict = lookup.get();
       return Zstd.decompress(compressed, zstdDict.getBytes(), i);
     }
+
   }
 
   @Override

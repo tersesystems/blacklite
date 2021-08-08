@@ -11,13 +11,13 @@ import java.util.function.Consumer;
  * The zstd trainer codec uses zstd without compression, but also trains the message set using a
  * dictionary. When the trainer has enough sample messages, the hook is called.
  */
-public class ZstdDictTrainer {
+public class ZStdDictTrainer {
   private final com.github.luben.zstd.ZstdDictTrainer trainer;
   private final AtomicBoolean trainDictionary;
   private final Consumer<byte[]> completionHook;
   private ExecutorService executor;
 
-  public ZstdDictTrainer(int sampleSize, int dictSize, Consumer<byte[]> completionHook)
+  public ZStdDictTrainer(int sampleSize, int dictSize, Consumer<byte[]> completionHook)
       throws CodecException {
     trainDictionary = new AtomicBoolean(true);
     this.trainer = new com.github.luben.zstd.ZstdDictTrainer(sampleSize, dictSize);
