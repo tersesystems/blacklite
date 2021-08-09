@@ -129,42 +129,7 @@ public class BlackliteReader implements Runnable {
     StatusReporter statusReporter = StatusReporter.DEFAULT;
     try (Connection c = Database.createConnection(file)) {
       Codec codec = defaultCodec(statusReporter, c);
-      QueryBuilder qb = new QueryBuilder(codec);
-
-      DateParser dateParser = new DateParser(timezone);
-      if (beforeTime != null) {
-        Instant before;
-        final String beforeString = beforeTime.beforeString;
-        if (beforeString != null) {
-          before =
-            dateParser
-              .parse(beforeString)
-              .orElseThrow(
-                () -> new IllegalStateException("Cannot parse before string: " + beforeString));
-        } else {
-          before = Instant.ofEpochSecond(beforeTime.beforeEpoch);
-        }
-        qb.addBefore(before);
-      }
-
-      if (afterTime != null) {
-        final String afterString = afterTime.afterString;
-        Instant after;
-        if (afterString != null) {
-          after =
-            dateParser
-              .parse(afterString)
-              .orElseThrow(
-                () -> new IllegalStateException("Cannot parse after string: " + afterString));
-        } else {
-          after = Instant.ofEpochSecond(afterTime.afterEpoch);
-        }
-        qb.addAfter(after);
-      }
-
-      if (whereString != null) {
-        qb.addWhere(whereString);
-      }
+      QueryBuilder qb = createQueryBuilder(codec);
 
       Stream<LogEntry> entryStream = qb.execute(c, verbose);
       entryStream
@@ -176,10 +141,50 @@ public class BlackliteReader implements Runnable {
     }
   }
 
+  QueryBuilder createQueryBuilder(Codec codec) {
+    QueryBuilder qb = new QueryBuilder(codec);
+
+    DateParser dateParser = new DateParser(timezone);
+    if (beforeTime != null) {
+      Instant before;
+      final String beforeString = beforeTime.beforeString;
+      if (beforeString != null) {
+        before =
+          dateParser
+            .parse(beforeString)
+            .orElseThrow(
+              () -> new IllegalStateException("Cannot parse before string: " + beforeString));
+      } else {
+        before = Instant.ofEpochSecond(beforeTime.beforeEpoch);
+      }
+      qb.addBefore(before);
+    }
+
+    if (afterTime != null) {
+      final String afterString = afterTime.afterString;
+      Instant after;
+      if (afterString != null) {
+        after =
+          dateParser
+            .parse(afterString)
+            .orElseThrow(
+              () -> new IllegalStateException("Cannot parse after string: " + afterString));
+      } else {
+        after = Instant.ofEpochSecond(afterTime.afterEpoch);
+      }
+      qb.addAfter(after);
+    }
+
+    if (whereString != null) {
+      qb.addWhere(whereString);
+    }
+    return qb;
+  }
+
   private Codec defaultCodec(StatusReporter statusReporter, Connection c) throws SQLException {
     try (PreparedStatement ps = c.prepareStatement("SELECT content FROM entries LIMIT 1")) {
       try (ResultSet resultSet = ps.executeQuery()) {
-        if (resultSet.first()) {
+        if (resultSet.next()) {
           final byte[] contentBytes = resultSet.getBytes(0);
           if (ZStdUtils.isFrame(contentBytes)) {
             return zstdDictCodec(statusReporter);
