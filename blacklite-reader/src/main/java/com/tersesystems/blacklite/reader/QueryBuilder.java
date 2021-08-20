@@ -1,5 +1,8 @@
 package com.tersesystems.blacklite.reader;
 
+import com.tersesystems.blacklite.codec.Codec;
+import org.sqlite.Function;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,10 +13,15 @@ import java.util.stream.StreamSupport;
 
 public class QueryBuilder {
 
+  private final Codec codec;
   private String whereString;
   private Instant before;
   private Instant after;
   private int boundParams = 0;
+
+  public QueryBuilder(Codec codec) {
+    this.codec = codec;
+  }
 
   public void addBefore(Instant before) {
     this.boundParams += 1;
@@ -36,6 +44,7 @@ public class QueryBuilder {
       verboseExecute(statement);
     }
 
+    registerCodec(c);
     try (PreparedStatement ps = c.prepareStatement(statement)) {
       int adder = 1;
       if (before != null) {
@@ -52,9 +61,21 @@ public class QueryBuilder {
     }
   }
 
-  String createSQL() {
+  protected void registerCodec(Connection c) throws SQLException {
+    Function codecFunction =
+      new Function() {
+        @Override
+        protected void xFunc() throws SQLException {
+          result(codec.decode(value_blob(0)));
+        }
+      };
+    // Register the codec as a custom SQLite function
+    Function.create(c, "decode", codecFunction);
+  }
+
+  protected String createSQL() {
     StringBuilder sb = new StringBuilder();
-    sb.append("SELECT epoch_secs, nanos, level, content FROM entries");
+    sb.append("SELECT epoch_secs, nanos, level, decode(content) FROM entries");
 
     if (boundParams > 0 || whereString != null) {
       sb.append(" WHERE ");

@@ -5,25 +5,29 @@
 
 package com.tersesystems.blacklite.reader;
 
-import com.tersesystems.blacklite.BlockingEntryWriter;
-import com.tersesystems.blacklite.DefaultEntryStoreConfig;
-import com.tersesystems.blacklite.EntryStoreConfig;
-import com.tersesystems.blacklite.StatusReporter;
-import com.tersesystems.blacklite.archive.Archiver;
-import com.tersesystems.blacklite.archive.NoOpArchiver;
+import com.tersesystems.blacklite.*;
 import com.tersesystems.blacklite.codec.Codec;
-import com.tersesystems.blacklite.codec.zstd.ZStdCodec;
+import com.tersesystems.blacklite.codec.zstd.ZStdDictSqliteRepository;
+import com.tersesystems.blacklite.codec.zstd.ZStdUtils;
+import com.tersesystems.blacklite.codec.zstd.ZStdDictCodec;
+import org.sqlite.Function;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Command(name = "CompressDatabase", mixinStandardHelpOptions = true, version = "0.1",
   description = "use zstd compression")
 public class CompressDatabase implements Runnable {
+
+  StatusReporter reporter = StatusReporter.DEFAULT;
 
   @Parameters(paramLabel = "SOURCE", description = "the source database")
   Path source;
@@ -44,30 +48,90 @@ public class CompressDatabase implements Runnable {
   }
 
   public void run() {
-    QueryBuilder qb = new QueryBuilder();
+    try {
+      initializeCompressDatabase();
 
-    EntryStoreConfig config = new DefaultEntryStoreConfig();
-    config.setFile(dest.toAbsolutePath().toString());
-    config.setBatchInsertSize(1); // don't batch inserts here.
+      try (Connection c = Database.createConnection(source.toFile())) {
+        ZStdDictSqliteRepository repo = createRepository(c);
 
-    Codec codec = new ZStdCodec();
-    Archiver archiver = new NoOpArchiver();
-    try (Connection c = Database.createConnection(dest.toFile())) {
-      BlockingEntryWriter writer = new BlockingEntryWriter(StatusReporter.DEFAULT, config, archiver, "blacklite-writer");
-      try {
-        final Stream<LogEntry> entries = qb.execute(c, false);
-        entries.forEach(
-          e -> {
-            byte[] compressed = codec.encode(e.getContent());
-            writer.write(e.getEpochSecs(), e.getNanos(), e.getLevel(), compressed);
-          });
-      } finally {
-        writer.close();
+        ZStdDictCodec codec = new ZStdDictCodec();
+        codec.setRepository(repo);
+        codec.initialize(reporter);
+        registerCodecFunction(c, codec);
+
+        Statement statement = c.createStatement();
+        try (statement) {
+          String attachName = "blacklite_zstd";
+          final String attachStatement = getAttachStatement(dest.toAbsolutePath(), attachName);
+          System.out.println("attachStatement = " + attachStatement);
+          statement.executeUpdate(attachStatement);
+
+          String sql = getBulkInsertStatement(attachName);
+          statement.executeUpdate(sql);
+        }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      reporter.addError("Could not compress database", e);
     }
   }
 
+  private ZStdDictSqliteRepository createRepository(Connection c) throws SQLException {
+    int sampleSize = 10000;
+    int dictSize = 10485760;
+
+    final byte[] dictBytes;
+    try (Statement stmt = c.createStatement()) {
+      try (ResultSet rs = stmt.executeQuery("SELECT epoch_secs, nanos, level, content FROM entries")) {
+        LogEntrySpliterator logEntrySpliterator = new LogEntrySpliterator(rs);
+        Stream<LogEntry> stream = StreamSupport.stream(logEntrySpliterator, false);
+        dictBytes = ZStdUtils.trainDictionary(sampleSize, dictSize, stream.map(LogEntry::getContent));
+      }
+    }
+    final ZStdDictSqliteRepository repo = new ZStdDictSqliteRepository();
+    repo.setFile(dest.toAbsolutePath().toString());
+    repo.initialize();
+    repo.save(dictBytes);
+
+    return repo;
+  }
+
+  private void initializeCompressDatabase() throws Exception {
+    EntryStoreConfig config = new DefaultEntryStoreConfig();
+    config.setFile(dest.toAbsolutePath().toString());
+    config.setBatchInsertSize(1); // don't batch inserts here.
+    EntryStore entryStore = new DefaultEntryStore(config);
+    try (entryStore) {
+      entryStore.initialize();
+    }
+
+    final ZStdDictSqliteRepository repository = new ZStdDictSqliteRepository();
+    try (repository) {
+      repository.setFile(dest.toFile().getAbsolutePath());
+      repository.initialize();
+    }
+  }
+
+  private String getBulkInsertStatement(String attachName) {
+    String sql = "insert into %s.entries (epoch_secs, nanos, level, content)\n" +
+      "select epoch_secs, nanos, level, encode(content) from entries";
+
+    return String.format(sql, attachName);
+  }
+
+  private String getAttachStatement(Path destPath, String attachName) {
+    return String.format("ATTACH DATABASE \"%s\" AS %s", destPath.toString(), attachName);
+  }
+
+  private void registerCodecFunction(Connection c, Codec codec) throws SQLException {
+    Function codecFunction =
+      new Function() {
+        @Override
+        protected void xFunc() throws SQLException {
+          result(codec.encode(value_blob(0)));
+        }
+      };
+    // Register the codec as a custom SQLite function
+    Function.create(c, "encode", codecFunction);
+  }
 
 }

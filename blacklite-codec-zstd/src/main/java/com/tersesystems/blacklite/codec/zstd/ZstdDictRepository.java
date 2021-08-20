@@ -4,9 +4,9 @@ import com.tersesystems.blacklite.codec.CodecException;
 import java.util.Optional;
 
 public interface ZstdDictRepository extends AutoCloseable {
-  Optional<ZstdDict> lookup(long id);
+  Optional<ZStdDict> lookup(long id);
 
-  Optional<ZstdDict> mostRecent();
+  Optional<ZStdDict> mostRecent();
 
   void save(byte[] dictBytes);
 

@@ -11,9 +11,9 @@ public class LogEntry {
   }
 
   /**
-   * Writes values to this log entry without a new allocation.
+   * Set values to this log entry without a new allocation.
    */
-  public LogEntry write(long epochSecs, int nanos, int level, byte[] content) {
+  public LogEntry set(long epochSecs, int nanos, int level, byte[] content) {
     this.epochSecs = epochSecs;
     this.nanos = nanos;
     this.level = level;
@@ -31,7 +31,7 @@ public class LogEntry {
     LogEntry newInstance = new LogEntry();
     byte[] newContent = new byte[content.length];
     System.arraycopy(content, 0, newContent, 0, content.length);
-    return newInstance.write(epochSecs, nanos, level, newContent);
+    return newInstance.set(epochSecs, nanos, level, newContent);
   }
 
   public long getEpochSecs() {

@@ -21,14 +21,14 @@ public class ZstdDictFileRepository implements ZstdDictRepository {
   }
 
   @Override
-  public Optional<ZstdDict> lookup(long id) {
+  public Optional<ZStdDict> lookup(long id) {
     return mostRecent().filter(dict -> dict.getId() == id);
   }
 
   @Override
-  public Optional<ZstdDict> mostRecent() {
+  public Optional<ZStdDict> mostRecent() {
     return readFromFile(Paths.get(getFile()))
-        .map(bytes -> new ZstdDict(Zstd.getDictIdFromDict(bytes), bytes));
+        .map(bytes -> new ZStdDict(Zstd.getDictIdFromDict(bytes), bytes));
   }
 
   @Override

@@ -7,6 +7,8 @@ import com.tersesystems.blacklite.codec.CodecException;
 import java.sql.*;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.ResourceBundle;
+
 import org.sqlite.JDBC;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConnection;
@@ -18,6 +20,7 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
   private SQLiteConnection conn;
 
   private String file;
+  private Statements statements = new Statements();
 
   public void initialize() throws CodecException {
     Objects.requireNonNull(file, "null file");
@@ -40,9 +43,9 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
   }
 
   @Override
-  public Optional<ZstdDict> lookup(long id) {
+  public Optional<ZStdDict> lookup(long id) {
     try {
-      String queryStatement = Dictionaries.queryStatement();
+      String queryStatement = statements.queryStatement();
       try (PreparedStatement statement = conn.prepareStatement(queryStatement)) {
         statement.setLong(1, id);
         return dictFromStatement(statement);
@@ -53,11 +56,11 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
   }
 
   @Override
-  public Optional<ZstdDict> mostRecent() {
+  public Optional<ZStdDict> mostRecent() {
     try {
       // XXX should read from database first, if empty then look for file and
       // read that in and save it to database
-      String queryStatement = Dictionaries.firstStatement();
+      String queryStatement = statements.firstStatement();
       try (PreparedStatement statement = conn.prepareStatement(queryStatement)) {
         return dictFromStatement(statement);
       }
@@ -70,7 +73,7 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
   public void save(byte[] dictBytes) {
     long dictId = Zstd.getDictIdFromDict(dictBytes);
     try {
-      String insertStatement = Dictionaries.insertStatement();
+      String insertStatement = statements.insertStatement();
       try (PreparedStatement statement = conn.prepareStatement(insertStatement)) {
         int adder = 1;
         statement.setLong(adder++, dictId);
@@ -95,12 +98,12 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
     return config;
   }
 
-  private Optional<ZstdDict> dictFromStatement(PreparedStatement statement) throws SQLException {
+  private Optional<ZStdDict> dictFromStatement(PreparedStatement statement) throws SQLException {
     try (ResultSet rs = statement.executeQuery()) {
       if (rs.next()) {
         long id1 = rs.getLong(1);
         byte[] bytes = rs.getBytes(2);
-        ZstdDict dict = new ZstdDict(id1, bytes);
+        ZStdDict dict = new ZStdDict(id1, bytes);
         return Optional.of(dict);
       } else {
         return Optional.empty();
@@ -110,7 +113,7 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
 
   protected void createDDL() {
     try {
-      String createStatements = Dictionaries.createStatement();
+      String createStatements = statements.createStatement();
       try (Statement stmt = conn.createStatement()) {
         stmt.executeUpdate(createStatements);
       }
@@ -120,23 +123,24 @@ public class ZStdDictSqliteRepository implements ZstdDictRepository {
     }
   }
 
-  public static final class Dictionaries {
-    public static String createStatement() {
-      return "CREATE TABLE IF NOT EXISTS zstd_dicts (" // keep the dictionary in database
-          + "dict_id LONG NOT NULL PRIMARY KEY," // the id, always 32 bit random
-          + "dict_bytes BLOB NOT NULL)"; // the zstd dictionary itself
+  public static class Statements {
+    private final ResourceBundle bundle =
+      ResourceBundle.getBundle(this.getClass().getPackage().getName() + ".resources");
+
+    public String createStatement() {
+      return bundle.getString("zstddict.create.statement"); // the zstd dictionary itself
     }
 
-    public static String insertStatement() {
-      return "INSERT INTO zstd_dicts(dict_id, dict_bytes)\n" + "values(?, ?)";
+    public String insertStatement() {
+      return bundle.getString("zstddict.insert.statement");
     }
 
-    public static String queryStatement() {
-      return "SELECT dict_id, dict_bytes FROM zstd_dicts WHERE dict_id = ?";
+    public String queryStatement() {
+      return bundle.getString("zstddict.query.statement");
     }
 
-    public static String firstStatement() {
-      return "SELECT dict_id, dict_bytes FROM zstd_dicts LIMIT 1";
+    public String firstStatement() {
+      return bundle.getString("zstddict.first.statement");
     }
   }
 }

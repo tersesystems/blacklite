@@ -1,6 +1,6 @@
 package com.tersesystems.blacklite.log4j2.zstd;
 
-import com.tersesystems.blacklite.codec.zstd.ZstdDictCodec;
+import com.tersesystems.blacklite.codec.zstd.ZStdDictCodec;
 import com.tersesystems.blacklite.codec.zstd.ZstdDictRepository;
 import org.apache.logging.log4j.core.Core;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
@@ -9,7 +9,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 
 @Plugin(name = "ZStdDictCodec", category = Core.CATEGORY_NAME, printObject = true)
-public class Log4JZStdDictCodec extends ZstdDictCodec {
+public class Log4JZStdDictCodec extends ZStdDictCodec {
 
   Log4JZStdDictCodec(int level, int sampleSize, int dictSize, ZstdDictRepository repository) {
     setLevel(level);

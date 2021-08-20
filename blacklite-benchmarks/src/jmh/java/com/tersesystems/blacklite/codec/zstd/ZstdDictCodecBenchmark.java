@@ -16,14 +16,14 @@ import org.openjdk.jmh.annotations.*;
 public class ZstdDictCodecBenchmark {
 
   byte[] content;
-  private ZstdDictCodec codec;
+  private ZStdDictCodec codec;
 
   @Setup
   public void setUp() throws IOException {
     ZstdDictFileRepository repo = new ZstdDictFileRepository();
     repo.setFile("/home/wsargent/work/blacklite/blacklite-benchmarks/src/jmh/resources/dictionary");
 
-    this.codec = new ZstdDictCodec();
+    this.codec = new ZStdDictCodec();
     this.codec.setRepository(repo);
     this.codec.initialize(StatusReporter.DEFAULT);
 
