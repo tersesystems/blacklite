@@ -1,24 +1,29 @@
 package com.tersesystems.blacklite.reader;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.sql.*;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.TimeZone;
 import java.util.stream.Stream;
 
 import com.tersesystems.blacklite.StatusReporter;
 import com.tersesystems.blacklite.codec.Codec;
 import com.tersesystems.blacklite.codec.identity.IdentityCodec;
-import com.tersesystems.blacklite.codec.zstd.ZStdDictSqliteRepository;
-import com.tersesystems.blacklite.codec.zstd.ZStdUtils;
-import com.tersesystems.blacklite.codec.zstd.ZStdDictCodec;
+import com.tersesystems.blacklite.codec.zstd.*;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+
+import static java.lang.String.format;
 
 /**
  * Runs the command line application, using command line options to run parse out dates, set up a
@@ -39,12 +44,6 @@ public class BlackliteReader implements Runnable {
       defaultValue = "utf8",
       description = "Charset (default: ${DEFAULT-VALUE})")
   Charset charset;
-
-  @Option(
-      names = {"--binary"},
-      paramLabel = "BINARY",
-      description = "Renders content as raw BLOB binary")
-  boolean binary;
 
   // after string and after TSE are mutually exclusive
   @ArgGroup AfterTime afterTime;
@@ -99,6 +98,11 @@ public class BlackliteReader implements Runnable {
   TimeZone timezone;
 
   @Option(
+    names = {"-d", "--dictionary"},
+    description = "Use the given zstandard dictionary")
+  String dictPath;
+
+  @Option(
       names = {"-V", "--version"},
       versionHelp = true,
       description = "display version info")
@@ -125,10 +129,25 @@ public class BlackliteReader implements Runnable {
   }
 
   public void run() {
-
     StatusReporter statusReporter = StatusReporter.DEFAULT;
+    if (! file.exists()) {
+      throw new IllegalArgumentException("File not found: " + file);
+    }
+
+    if (! file.canRead()) {
+      throw new IllegalArgumentException("Cannot read file: " + file);
+    }
+
     try (Connection c = Database.createConnection(file)) {
-      Codec codec = defaultCodec(statusReporter, c);
+      Codec codec;
+      if (isCompressed(c)) {
+        ZstdDictRepository dictRepo = dictPath != null ?
+          explicitDictionary(new File(dictPath)) :
+          zstdDictFromDB(file);
+        codec = zstdDictCodec(statusReporter, dictRepo);
+      } else {
+        codec = identityCodec();
+      }
       QueryBuilder qb = createQueryBuilder(codec);
 
       Stream<LogEntry> entryStream = qb.execute(c, verbose);
@@ -141,7 +160,7 @@ public class BlackliteReader implements Runnable {
     }
   }
 
-  QueryBuilder createQueryBuilder(Codec codec) {
+  protected QueryBuilder createQueryBuilder(Codec codec) {
     QueryBuilder qb = new QueryBuilder(codec);
 
     DateParser dateParser = new DateParser(timezone);
@@ -181,34 +200,79 @@ public class BlackliteReader implements Runnable {
     return qb;
   }
 
-  private Codec defaultCodec(StatusReporter statusReporter, Connection c) throws SQLException {
+  protected boolean isCompressed(Connection c) throws SQLException {
     try (PreparedStatement ps = c.prepareStatement("SELECT content FROM entries LIMIT 1")) {
       try (ResultSet resultSet = ps.executeQuery()) {
         if (resultSet.next()) {
-          final byte[] contentBytes = resultSet.getBytes(0);
-          if (ZStdUtils.isFrame(contentBytes)) {
-            return zstdDictCodec(statusReporter);
-          }
+          final byte[] contentBytes = resultSet.getBytes(1);
+          return ZStdUtils.isFrame(contentBytes);
         }
       }
     }
+    return false;
+  }
 
-    // no rows?  no problem.
-    return identityCodec();
+  protected ZstdDictRepository explicitDictionary(File dictFile) {
+    if (! dictFile.exists()) {
+      String msg = format("Dictionary %s does not exist!", dictFile);
+      throw new IllegalStateException(msg);
+    }
+
+    if (! dictFile.canRead()) {
+      String msg = format("Dictionary %s cannot be read!", dictFile);
+      throw new IllegalStateException(msg);
+    }
+
+    if (isDatabase(dictFile)) {
+      return zstdDictFromDB(dictFile);
+    } else {
+      try {
+        if (ZStdUtils.isDictionary(dictFile)) {
+          return zstdDictFromFile(dictFile);
+        } else {
+          String msg = format("Dictionary %s must be an sqlite db or a zstd dictionary!", dictFile);
+          throw new IllegalStateException(msg);
+        }
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+  }
+
+  protected boolean isDatabase(File dictFile) {
+    try (InputStream inputStream = Files.newInputStream(dictFile.toPath())) {
+      // https://sqlite.org/fileformat.html
+      final byte[] bytes = inputStream.readNBytes(15);
+      final byte[] magicBytes = "SQLite format 3".getBytes(StandardCharsets.UTF_8);
+      return Arrays.equals(bytes, magicBytes);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   protected Codec identityCodec() {
     return new IdentityCodec();
   }
 
-  protected Codec zstdDictCodec(StatusReporter statusReporter) {
-    final ZStdDictSqliteRepository dictRepo = new ZStdDictSqliteRepository();
-    dictRepo.setFile(file.getAbsolutePath());
-    dictRepo.initialize();
+  protected Codec zstdDictCodec(StatusReporter statusReporter, ZstdDictRepository dictRepo) {
     final ZStdDictCodec zstdDictCodec = new ZStdDictCodec();
     zstdDictCodec.setRepository(dictRepo);
     zstdDictCodec.initialize(statusReporter);
     return zstdDictCodec;
+  }
+
+  protected ZStdDictSqliteRepository zstdDictFromDB(File dbFile) {
+    final ZStdDictSqliteRepository dictRepo = new ZStdDictSqliteRepository();
+    dictRepo.setFile(dbFile.getAbsolutePath());
+    dictRepo.initialize();
+    return dictRepo;
+  }
+
+  protected ZstdDictFileRepository zstdDictFromFile(File dictFile) {
+    final ZstdDictFileRepository dictRepo = new ZstdDictFileRepository();
+    dictRepo.setFile(dictFile.getAbsolutePath());
+    dictRepo.initialize();
+    return dictRepo;
   }
 
 }
