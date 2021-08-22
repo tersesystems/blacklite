@@ -16,9 +16,13 @@ public class LogEntrySpliterator extends Spliterators.AbstractSpliterator<LogEnt
   private final ResultSet resultSet;
   private final LogEntry logEntry = new LogEntry();
 
-  public LogEntrySpliterator(final ResultSet resultSet) {
+  public LogEntrySpliterator(final ResultSet resultSet) throws SQLException {
     super(Long.MAX_VALUE,Spliterator.ORDERED);
-    this.resultSet = resultSet;
+    if (! resultSet.isClosed()) {
+      this.resultSet = resultSet;
+    } else {
+      throw new SQLException("Closed resultset!");
+    }
   }
 
   @Override
@@ -34,10 +38,10 @@ public class LogEntrySpliterator extends Spliterators.AbstractSpliterator<LogEnt
 
   private LogEntry setLogEntry(ResultSet resultSet) {
     try {
-      long epochSecs = resultSet.getLong(EPOCH_SECS);
-      int nanos = resultSet.getInt(NANOS);
-      int level = resultSet.getInt(LEVEL);
-      byte[] bytes = resultSet.getBytes(CONTENT);
+      long epochSecs = resultSet.getLong(1);
+      int nanos = resultSet.getInt(2);
+      int level = resultSet.getInt(3);
+      byte[] bytes = resultSet.getBytes(4);
 
       return logEntry.set(epochSecs, nanos, level, bytes);
     } catch (SQLException e) {
@@ -52,4 +56,6 @@ public class LogEntrySpliterator extends Spliterators.AbstractSpliterator<LogEnt
       throw new RuntimeException(e);
     }
   }
+
+  // XXX should be a way to close the resultset / prepared statement here
 }

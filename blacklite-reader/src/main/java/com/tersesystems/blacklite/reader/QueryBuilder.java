@@ -45,20 +45,19 @@ public class QueryBuilder {
     }
 
     registerCodec(c);
-    try (PreparedStatement ps = c.prepareStatement(statement)) {
-      int adder = 1;
-      if (before != null) {
-        ps.setLong(adder++, before.getEpochSecond());
-      }
-
-      if (after != null) {
-        ps.setLong(adder, after.getEpochSecond());
-      }
-
-      final ResultSet rs = ps.executeQuery();
-      final LogEntrySpliterator logEntrySpliterator = new LogEntrySpliterator(rs);
-      return StreamSupport.stream(logEntrySpliterator, false);
+    PreparedStatement ps = c.prepareStatement(statement);
+    int adder = 1;
+    if (before != null) {
+      ps.setLong(adder++, before.getEpochSecond());
     }
+
+    if (after != null) {
+      ps.setLong(adder, after.getEpochSecond());
+    }
+
+    final ResultSet rs = ps.executeQuery();
+    final LogEntrySpliterator logEntrySpliterator = new LogEntrySpliterator(rs);
+    return StreamSupport.stream(logEntrySpliterator, false);
   }
 
   protected void registerCodec(Connection c) throws SQLException {

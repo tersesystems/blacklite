@@ -3,7 +3,10 @@
 
 Ideally use virtualenv to segment your environment:
 
-```scala
+```bash
+# or whatever director you have blacklite installed in
+cd blacklite
+# see virtualenv docs for installation
 sudo easy_install virtualenv
 . venv/bin/activate
 ```
@@ -11,6 +14,7 @@ sudo easy_install virtualenv
 Extracting content is simple and easy using [sqlite-utils](https://sqlite-utils.readthedocs.io/en/stable/):
 
 ```bash
+# or pipx etc
 pip install sqlite-utils zstandard click
 ```
 
