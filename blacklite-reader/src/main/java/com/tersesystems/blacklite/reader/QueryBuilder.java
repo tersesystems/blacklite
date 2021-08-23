@@ -18,6 +18,7 @@ public class QueryBuilder {
   private Instant before;
   private Instant after;
   private int boundParams = 0;
+  private boolean count;
 
   public QueryBuilder(Codec codec) {
     this.codec = codec;
@@ -35,6 +36,29 @@ public class QueryBuilder {
 
   public void addWhere(String whereString) {
     this.whereString = whereString.trim();
+  }
+
+  public long executeCount(Connection c, boolean verbose) throws SQLException {
+    final String statement = createCountSQL();
+
+    if (verbose) {
+      verboseExecute(statement);
+    }
+
+    PreparedStatement ps = c.prepareStatement(statement);
+    int adder = 1;
+    if (before != null) {
+      ps.setLong(adder++, before.getEpochSecond());
+    }
+
+    if (after != null) {
+      ps.setLong(adder, after.getEpochSecond());
+    }
+
+    try (ResultSet rs = ps.executeQuery()) {
+      rs.next();
+      return rs.getLong(1);
+    }
   }
 
   public Stream<LogEntry> execute(Connection c, boolean verbose) throws SQLException {
@@ -60,7 +84,7 @@ public class QueryBuilder {
     return StreamSupport.stream(logEntrySpliterator, false);
   }
 
-  protected void registerCodec(Connection c) throws SQLException {
+  public void registerCodec(Connection c) throws SQLException {
     Function codecFunction =
       new Function() {
         @Override
@@ -72,10 +96,21 @@ public class QueryBuilder {
     Function.create(c, "decode", codecFunction);
   }
 
-  protected String createSQL() {
+  public String createCountSQL() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("SELECT COUNT(*) FROM entries");
+
+    return createParameters(sb);
+  }
+
+  public String createSQL() {
     StringBuilder sb = new StringBuilder();
     sb.append("SELECT epoch_secs, nanos, level, decode(content) FROM entries");
 
+    return createParameters(sb);
+  }
+
+  public String createParameters(StringBuilder sb) {
     if (boundParams > 0 || whereString != null) {
       sb.append(" WHERE ");
     }
@@ -116,15 +151,24 @@ public class QueryBuilder {
     System.err.println(s);
   }
 
-  Instant getBefore() {
+  public Instant getBefore() {
     return before;
   }
 
-  Instant getAfter() {
+  public Instant getAfter() {
     return after;
   }
 
-  String getWhere() {
+  public String getWhere() {
     return whereString;
   }
+
+  public void setCount(boolean count) {
+    this.count = count;
+  }
+
+  public boolean isCount() {
+    return this.count;
+  }
+
 }

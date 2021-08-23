@@ -6,8 +6,6 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
-import static com.tersesystems.blacklite.reader.Database.Entries.*;
-
 /**
  * A log entry spliterator.  This is not thread safe.
  */
