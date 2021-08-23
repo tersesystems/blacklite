@@ -21,6 +21,16 @@ public class BlackliteReaderTest {
   }
 
   @Test
+  public void testCount() {
+    final Path rootDir = Paths.get(System.getProperty("user.dir"));
+    final Path relative = Paths.get( "src", "test", "resources", "blacklite.db");
+    final Path path = rootDir.resolve(relative);
+    String[] args = { "-c", path.toString() };
+    final CommandLine commandLine = new CommandLine(new BlackliteReader());
+    assertThat(commandLine.execute(args)).isEqualTo(0);
+  }
+
+  @Test
   public void testCompressed() {
     final Path rootDir = Paths.get(System.getProperty("user.dir"));
     final Path relative = Paths.get( "src", "test", "resources", "blacklite-zstd.db");
@@ -33,7 +43,7 @@ public class BlackliteReaderTest {
     @Test
     public void testCompressedDict() {
       final Path rootDir = Paths.get(System.getProperty("user.dir"));
-      final Path relative = Paths.get( "src", "test", "resources", "blacklite-zstd-dict.db");
+      final Path relative = Paths.get( "src", "test", "resources", "zstd-dict.db");
       final Path path = rootDir.resolve(relative);
       String[] args = { path.toString() };
       final CommandLine commandLine = new CommandLine(new BlackliteReader());

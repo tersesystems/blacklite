@@ -86,6 +86,12 @@ public class BlackliteReader implements Runnable {
   boolean verbose;
 
   @Option(
+    names = {"-c", "--count"},
+    paramLabel = "COUNT",
+    description = "Return a count of entries")
+  boolean count;
+
+  @Option(
       names = {"-w", "--where"},
       paramLabel = "WHERE",
       description = "Custom SQL WHERE clause")
@@ -150,11 +156,16 @@ public class BlackliteReader implements Runnable {
       }
       QueryBuilder qb = createQueryBuilder(codec);
 
-      Stream<LogEntry> entryStream = qb.execute(c, verbose);
-      entryStream
-        .map(LogEntry::getContent)
-        .map(content -> charset.decode(ByteBuffer.wrap(content)))
-        .forEach(System.out::println);
+      if (qb.isCount()) {
+        long countResult = qb.executeCount(c, verbose);
+        System.out.println(countResult);
+      } else {
+        Stream<LogEntry> entryStream = qb.execute(c, verbose);
+        entryStream
+          .map(LogEntry::getContent)
+          .map(content -> charset.decode(ByteBuffer.wrap(content)))
+          .forEach(System.out::print);
+      }
     } catch (SQLException e) {
       statusReporter.addError("Cannot complete query", e);
     }
@@ -162,6 +173,9 @@ public class BlackliteReader implements Runnable {
 
   protected QueryBuilder createQueryBuilder(Codec codec) {
     QueryBuilder qb = new QueryBuilder(codec);
+    if (count) {
+      qb.setCount(count);
+    }
 
     DateParser dateParser = new DateParser(timezone);
     if (beforeTime != null) {
