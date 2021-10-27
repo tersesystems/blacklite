@@ -14,8 +14,8 @@ output = [
 [![Travis CI](https://travis-ci.org/tersesystems/blacklite.svg?branch=master)](https://travis-ci.org/tersesystems/blacklite)
 <!---freshmark /shields -->
 
-Blacklite is an appender that writes to a [SQLite](https://www.sqlite.org/index.html) database, configured for writes
-**roughly equivalent to an in-memory ring buffer** by using a [memory mapping](https://www.sqlite.org/mmap.html) and
+Blacklite is an appender that writes to a [SQLite](https://www.sqlite.org/index.html) database, configured for writes at speeds
+**roughly equivalent to an in-memory ring buffer** by using [memory mapping](https://www.sqlite.org/mmap.html) and
 [write ahead logging](https://sqlite.org/wal.html).  Blacklite supports both [Logback](http://logback.qos.ch/) and
 [Log4J 2](https://logging.apache.org/log4j/2.x/).  Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
 
