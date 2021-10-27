@@ -14,16 +14,28 @@ output = [
 [![Travis CI](https://travis-ci.org/tersesystems/blacklite.svg?branch=master)](https://travis-ci.org/tersesystems/blacklite)
 <!---freshmark /shields -->
 
-Blacklite is an appender that writes to a [SQLite](https://www.sqlite.org/index.html) database.
-It combines all the advantages of writing to a database with the speed and control of passing
-around a flat file.  Blacklite supports both [Logback](http://logback.qos.ch/) and
-[Log4J 2](https://logging.apache.org/log4j/2.x/).
+Blacklite is an appender that writes to a [SQLite](https://www.sqlite.org/index.html) database, configured for writes
+**roughly equivalent to an in-memory ring buffer** by using a [memory mapping](https://www.sqlite.org/mmap.html) and
+[write ahead logging](https://sqlite.org/wal.html).  Blacklite supports both [Logback](http://logback.qos.ch/) and
+[Log4J 2](https://logging.apache.org/log4j/2.x/).  Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
 
-Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
+Blacklite writes to a single table with the following structure:
 
-* SQLite file means [total compatibility](https://sqlite.org/locrsf.html) and support over all platforms.
-* Uses [memory mapping](https://www.sqlite.org/mmap.html), batch inserts for maximum
- throughput with minimum latency.  No indexes, no autoincrement fields.
+```sql
+CREATE TABLE IF NOT EXISTS entries (
+  epoch_secs LONG, // number of seconds since epoch
+  nanos INTEGER,  // nanoseconds in the second
+  level INTEGER,  // numeric level of logging
+  content BLOB    // raw bytes from logging framework encoder / layout
+);
+```
+
+The `content` column contains the log entry itself, as bytes.  The only other columns are longs and integers.  There
+are no indexes or autoincrement field.  Logs stored in Blacklite are the same size as raw files.  In addition, using
+SQLite file means [total compatibility](https://sqlite.org/locrsf.html) and support over all platforms.
+
+In addition, there are a number of features that Blacklite has above and beyond raw append speed:
+
 * Built-in archiving and rollover based on number of rows.
 * Automatic ZStandard dictionary training and compression for 4x disk space savings in archives.
 * `blacklite-core` module allows direct entry writing with no logging framework needed.
