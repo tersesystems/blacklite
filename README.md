@@ -204,6 +204,8 @@ You should always use a `shutdownHook` to allow Logback to drain the queue befor
 
 The appender consists of a `file` property, and an `encoder` which encodes the bytes written to the `content` field in an entry.
 
+The `batchInsertSize` property determines the number of entries to batch before writing to the database.  This setting improves the throughput of inserts, but may result in a delay if logging volume is low.
+
 If not defined, the default archiver is the `DeletingArchiver` set to `10000` rows.
 
 ```xml
@@ -214,6 +216,9 @@ If not defined, the default archiver is the `DeletingArchiver` set to `10000` ro
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
         <file>logs/live.db</file>
+
+        <!-- insert on every row -->
+        <batchInsertSize>1</batchInsertSize>
 
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
         </encoder>
@@ -391,7 +396,9 @@ Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appe
 </Configuration>
 ```
 
-It is broadly similar to the Logback system.
+It is broadly similar to the Logback system, with the same settings.
+
+The `batchInsertSize` property determines the number of entries to batch before writing to the database.  This setting improves the throughput of inserts, but may result in a delay if logging volume is low.
 
 ## Benchmarks
 
@@ -428,6 +435,8 @@ BlockingEntryWriterBenchmark.benchmark        avgt   10       1.057 ±     0.010
 ```
 
 The async entry writer takes 11 nanoseconds to add the entry to the queue so that the background thread can write it.  The blocking entry writer takes 1 nanosecond, but then the SQLite write itself must be added onto that, which is roughly between 1k - 3k nanoseconds, depending on batch commits.
+
+Because the async entry writer takes 11 nanoseconds and SQLite writes are batched on another thread, the functional impact to the application is roughly the same as writing to a memory mapped file, with the benefit of having a searchable database at the end of it.
 
 Finally, there's the cost of archiving data using a zstandard codec.
 
