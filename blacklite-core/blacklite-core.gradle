@@ -7,7 +7,7 @@ dependencies {
     api project(":blacklite-api")
 
     // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
-    api group: 'org.xerial', name: 'sqlite-jdbc', version: '3.32.3.2'
+    api group: 'org.xerial', name: 'sqlite-jdbc', version: '3.36.0.3'
 
     // https://mvnrepository.com/artifact/org.jctools/jctools-core
     compile group: 'org.jctools', name: 'jctools-core', version: '3.2.0'
