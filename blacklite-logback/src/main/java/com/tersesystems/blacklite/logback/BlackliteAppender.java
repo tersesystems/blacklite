@@ -15,7 +15,7 @@ import java.util.Properties;
 /** A logback appender using blacklite as a backend. */
 public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     implements EntryStoreConfig, LoggerContextListener {
-  private final EntryStoreConfig config = new DefaultEntryStoreConfig();
+  private EntryStoreConfig config;
 
   private Encoder<ILoggingEvent> encoder;
   private EntryWriter entryWriter;

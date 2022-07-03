@@ -18,6 +18,7 @@
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
         <file>/tmp/blacklite-logback/live.db</file>
+        <properties>PRAGMA busy_timeout = 5000;</properties>
 
         <archiver class="com.tersesystems.blacklite.archive.RollingArchiver">
             <file>/tmp/blacklite-logback/archive.db</file>
