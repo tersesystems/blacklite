@@ -2,16 +2,15 @@ package com.tersesystems.blacklite;
 
 import com.tersesystems.blacklite.archive.ArchiveResult;
 import com.tersesystems.blacklite.archive.Archiver;
+import org.jctools.queues.MessagePassingQueue;
+import org.jctools.queues.MpscUnboundedXaddArrayQueue;
+
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
-import org.jctools.queues.MessagePassingQueue;
-import org.jctools.queues.MpscUnboundedXaddArrayQueue;
-import org.sqlite.SQLiteErrorCode;
-import org.sqlite.SQLiteException;
 
 public class AsyncEntryWriter extends AbstractEntryWriter {
 

@@ -1,6 +1,6 @@
 <configuration debug="true">
 
-  <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
         <delay>1000</delay>
     </shutdownHook>
 
