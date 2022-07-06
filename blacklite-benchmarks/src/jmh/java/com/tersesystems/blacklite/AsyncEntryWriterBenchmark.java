@@ -2,6 +2,8 @@ package com.tersesystems.blacklite;
 
 import com.tersesystems.blacklite.archive.Archiver;
 import com.tersesystems.blacklite.archive.NoOpArchiver;
+
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +26,11 @@ public class AsyncEntryWriterBenchmark {
     @Override
     public void insert(long epochSecond, int nanos, int level, byte[] content)
         throws SQLException {}
+
+    @Override
+    public Connection getConnection() {
+      return null;
+    }
 
     @Override
     public void vacuum() throws SQLException {}
