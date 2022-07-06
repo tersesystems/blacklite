@@ -2,6 +2,8 @@ package com.tersesystems.blacklite.archive;
 
 import com.tersesystems.blacklite.EntryStore;
 import com.tersesystems.blacklite.StatusReporter;
+
+import java.sql.Connection;
 import java.sql.SQLException;
 
 public class NoOpArchiver implements Archiver {
@@ -20,8 +22,8 @@ public class NoOpArchiver implements Archiver {
   }
 
   @Override
-  public int archive() {
-    return 0;
+  public ArchiveResult archive(Connection conn) {
+    return ArchiveResult.NoOp.instance;
   }
 
   @Override

@@ -7,8 +7,10 @@ import org.sqlite.SQLiteConfig;
 
 public class DefaultEntryStoreConfig implements EntryStoreConfig {
 
+  private static final Properties defaults = liveConfig().toProperties();
+
   private String file;
-  private Properties properties = liveConfig().toProperties();
+  private Properties properties = new Properties(defaults);
   private long batchInsertSize = 1000;
 
   @Override
@@ -28,7 +30,10 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
 
   @Override
   public void setProperties(Properties properties) {
-    this.properties = properties;
+    Properties merged = new Properties();
+    merged.putAll(defaults);
+    merged.putAll(properties);
+    this.properties = merged;
   }
 
   @Override
@@ -41,7 +46,7 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
     this.batchInsertSize = batchInsertSize;
   }
 
-  SQLiteConfig liveConfig() {
+  private static SQLiteConfig liveConfig() {
     // https://github.com/xerial/sqlite-jdbc/blob/master/Usage.md#configure-connections
     // https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
     // http://sqlite.1065341.n5.nabble.com/In-memory-only-WAL-file-td101283.html

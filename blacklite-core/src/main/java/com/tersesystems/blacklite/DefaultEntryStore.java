@@ -96,6 +96,11 @@ public class DefaultEntryStore implements EntryStore {
   }
 
   @Override
+  public Connection getConnection() {
+    return conn;
+  }
+
+  @Override
   public void close() throws Exception {
     try {
       executeBatch();

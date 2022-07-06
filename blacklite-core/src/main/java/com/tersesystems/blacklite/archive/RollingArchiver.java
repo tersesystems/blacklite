@@ -5,14 +5,15 @@ import static com.tersesystems.blacklite.DefaultEntryStore.APPLICATION_ID;
 import com.tersesystems.blacklite.StatusReporter;
 import com.tersesystems.blacklite.codec.Codec;
 import com.tersesystems.blacklite.codec.identity.IdentityCodec;
+
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.util.Objects;
 import java.util.Properties;
-import org.sqlite.Function;
-import org.sqlite.JDBC;
-import org.sqlite.SQLiteConfig;
+
+import org.sqlite.*;
 
 public class RollingArchiver extends AbstractArchiver implements FileArchiver {
 
@@ -58,30 +59,36 @@ public class RollingArchiver extends AbstractArchiver implements FileArchiver {
   }
 
   @Override
-  public int archive() {
-    // For some reason, we can't see the inserted statements unless we open up a new
-    // connection, probably transaction related.
-    // Opening up a new connection is very lightweight in SQLite, and given that this
-    // should only be happening once a second, it's not a huge load.
-    try (Connection conn = JDBC.createConnection(getEntryStore().getUrl(), getProperties())) {
+  public ArchiveResult archive(Connection conn) {
+    statusReporter.addInfo("rollingArchiver.archive start ");
+    ArchiveResult result;
+    try {
       Function codecFunction =
-          new Function() {
-            @Override
-            protected void xFunc() throws SQLException {
-              result(codec.encode(value_blob(0)));
-            }
-          };
+        new Function() {
+          @Override
+          protected void xFunc() throws SQLException {
+            result(codec.encode(value_blob(0)));
+          }
+        };
       // Register the codec as a custom SQLite function
       Function.create(conn, "encode", codecFunction);
-      conn.setAutoCommit(false);
-      if (shouldArchive(conn)) {
-        return archive(conn);
-      }
-    } catch (SQLException e) {
-      statusReporter.addError(e.getMessage(), e);
+      result = execute(conn);
+    } catch (Exception e) {
+      result = new ArchiveResult.Failure(e);
     }
-    return 0;
+    statusReporter.addInfo("rollingArchiver.archive end " + result);
+    return result;
   }
+
+  private ArchiveResult execute(Connection conn) throws Exception {
+    if (shouldArchive(conn)) {
+      int changed = doArchive(conn);
+      return new ArchiveResult.Success(changed);
+    } else {
+      return ArchiveResult.NoOp.instance;
+    }
+  }
+
 
   @Override
   public void close() throws Exception {
@@ -103,7 +110,7 @@ public class RollingArchiver extends AbstractArchiver implements FileArchiver {
    * <p>Because the archive database is append-only and inserts in batches, this keeps the archive
    * database down to near flat-file level efficiency.
    */
-  int archive(Connection conn) throws SQLException {
+  int doArchive(Connection conn) throws SQLException {
     // XXX Better logic that can be driven by configuration here.
 
     // This is the number of rows to leave in the live database (not archived or encoded)

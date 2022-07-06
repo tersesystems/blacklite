@@ -19,18 +19,18 @@ public class DeletingArchiver extends AbstractArchiver {
   }
 
   @Override
-  public int archive() {
-    Properties properties = new SQLiteConfig().toProperties();
-    try (Connection conn = JDBC.createConnection(getEntryStore().getUrl(), properties)) {
-      conn.setAutoCommit(false);
+  public ArchiveResult archive(Connection conn) {
+    try {
       if (shouldArchive(conn)) {
-        return delete(conn);
+        return new ArchiveResult.Success(delete(conn));
+      } else {
+        return ArchiveResult.NoOp.instance;
       }
-    } catch (SQLException e) {
-      statusReporter.addError(e.getMessage(), e);
+    } catch (Exception e) {
+      return new ArchiveResult.Failure(e);
     }
-    return 0;
   }
+
 
   int delete(Connection conn) throws SQLException {
     // This is the number of rows to leave in the live database (not archived or encoded)

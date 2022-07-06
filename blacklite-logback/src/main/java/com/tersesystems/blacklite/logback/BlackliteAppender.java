@@ -15,11 +15,14 @@ import java.util.Properties;
 /** A logback appender using blacklite as a backend. */
 public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     implements EntryStoreConfig, LoggerContextListener {
-  private final EntryStoreConfig config = new DefaultEntryStoreConfig();
+  private EntryStoreConfig config;
 
   private Encoder<ILoggingEvent> encoder;
   private EntryWriter entryWriter;
   private Archiver archiver;
+  private String file;
+  private Properties properties;
+  private long batchInsertSize;
 
   public Encoder<ILoggingEvent> getEncoder() {
     return encoder;
@@ -36,6 +39,13 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
 
     try {
       StatusReporter statusReporter = new LogbackStatusReporter(this);
+
+      config = new DefaultEntryStoreConfig();
+      config.setBatchInsertSize(batchInsertSize);
+      config.setFile(file);
+      if (properties != null) {
+        config.setProperties(properties);
+      }
 
       addInfo("Connecting with config " + config);
       if (config.getFile() == null || config.getFile().isEmpty()) {
@@ -79,32 +89,32 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
 
   @Override
   public String getFile() {
-    return config.getFile();
+    return this.file;
   }
 
   @Override
   public void setFile(String file) {
-    config.setFile(file);
+    this.file = file;
   }
 
   @Override
   public Properties getProperties() {
-    return config.getProperties();
+    return this.properties;
   }
 
   @Override
   public void setProperties(Properties properties) {
-    config.setProperties(properties);
+    this.properties = properties;
   }
 
   @Override
   public long getBatchInsertSize() {
-    return config.getBatchInsertSize();
+    return this.batchInsertSize;
   }
 
   @Override
   public void setBatchInsertSize(long batchInsertSize) {
-    config.setBatchInsertSize(batchInsertSize);
+    this.batchInsertSize = batchInsertSize;
   }
 
   public Archiver getArchiver() {

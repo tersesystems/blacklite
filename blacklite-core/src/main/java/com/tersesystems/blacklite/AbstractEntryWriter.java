@@ -1,6 +1,9 @@
 package com.tersesystems.blacklite;
 
+import com.tersesystems.blacklite.archive.ArchiveResult;
 import com.tersesystems.blacklite.archive.Archiver;
+
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,16 +50,15 @@ public abstract class AbstractEntryWriter implements EntryWriter {
     return enabled.get();
   }
 
-  protected static class ArchiveTask implements Runnable {
+  protected static class ArchiveTask {
     private final Archiver archiver;
 
     public ArchiveTask(Archiver archiver) {
       this.archiver = archiver;
     }
 
-    @Override
-    public void run() {
-      archiver.archive();
+    public ArchiveResult run(Connection conn) {
+      return archiver.archive(conn);
     }
 
     public void close() throws Exception {
