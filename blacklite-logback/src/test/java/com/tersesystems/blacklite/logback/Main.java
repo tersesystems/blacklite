@@ -21,6 +21,8 @@ public class Main {
       //System.out.println("Going to sleep for 10L, f = " + f);
       Thread.sleep(10L);
       //System.out.println("Okay I'm back");
+      // this will all log within the same millisecond, so we'll
+      // add a nanosecond instant so that we can see what's going on.
       for (int i = 0; i < 1000; i++) {
         logger.debug("debugging is fun!!! {}", Instant.now());
       }
@@ -28,6 +30,6 @@ public class Main {
 
     System.out.println("Sleeping for 1000L " + Instant.now());
     System.out.println("ALL DONE " + Instant.now());
-    Thread.sleep(10000L);
+    Thread.sleep(1000L);
   }
 }

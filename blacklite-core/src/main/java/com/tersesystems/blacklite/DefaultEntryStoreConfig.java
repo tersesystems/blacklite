@@ -11,7 +11,7 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
 
   private String file;
   private Properties properties = new Properties(defaults);
-  private long batchInsertSize = 1;
+  private long batchInsertSize = 1000;
 
   @Override
   public String getFile() {
