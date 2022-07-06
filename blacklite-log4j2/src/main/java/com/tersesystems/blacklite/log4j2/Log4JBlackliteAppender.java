@@ -66,7 +66,7 @@ public class Log4JBlackliteAppender extends AbstractAppender {
 
     config.setFile(file);
     config.setBatchInsertSize(batchInsertSize);
-    config.setProperties(additionalProperties);
+    //config.setProperties(additionalProperties);
     LOGGER.info("Connecting with config " + config);
 
     boolean ignoreExceptions = true;

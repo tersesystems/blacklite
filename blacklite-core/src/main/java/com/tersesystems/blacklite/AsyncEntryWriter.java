@@ -1,5 +1,6 @@
 package com.tersesystems.blacklite;
 
+import com.tersesystems.blacklite.archive.ArchiveResult;
 import com.tersesystems.blacklite.archive.Archiver;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
@@ -9,12 +10,16 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
+import org.sqlite.SQLiteErrorCode;
+import org.sqlite.SQLiteException;
 
 public class AsyncEntryWriter extends AbstractEntryWriter {
 
   protected final ExecutorService executor;
 
   private final MessagePassingQueue<Entry> queue;
+
+  private final boolean tracing = false;
 
   public AsyncEntryWriter(
       StatusReporter statusReporter, EntryStoreConfig config, Archiver archiver, String name)
@@ -46,11 +51,13 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
                 try {
                   // Nothing happening right now, try a batch commit
                   if (inserts.get() > 0) {
-                    // statusReporter.addInfo(
-                    //    "AsyncEntryWriter: idle counter "
-                    //        + idleCounter
-                    //        + ", committing "
-                    //        + inserts.get());
+                    if (tracing) {
+                      statusReporter.addInfo(
+                        "AsyncEntryWriter: idle counter "
+                          + idleCounter
+                          + ", committing "
+                          + inserts.get());
+                    }
                     entryStore.executeBatch();
                     entryStore.commit();
                     inserts.set(0);
@@ -59,7 +66,11 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
                   // If it's been idle for a while, run the archive task.
                   // XXX this should also run at set intervals if a deadline is exceeded.
                   if (lastRun.get() < System.nanoTime() - 1_000_000_000) {
-                    archiveTask.run();
+                    ArchiveResult result = archiveTask.run(entryStore.getConnection());
+                    if (result instanceof ArchiveResult.Failure) {
+                      final Exception e = ((ArchiveResult.Failure) result).getException();
+                      statusReporter.addError("AsyncEntryWriter: Archive task returned failure: ", e);
+                    }
                     lastRun.set(System.nanoTime());
                     return 0;
                   }
@@ -95,7 +106,7 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
   @Override
   public void write(long epochSeconds, int nanos, int level, byte[] content) {
     if (!queue.relaxedOffer(new Entry(-1, epochSeconds, nanos, level, content))) {
-      statusReporter.addError("Could not accept entry!");
+      statusReporter.addError("AsyncEntryWriter: Could not accept entry!");
     }
   }
 
@@ -104,14 +115,25 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
     // Reject any additional inserts.
     enabled.set(false);
 
+    statusReporter.addInfo("AsyncEntryWriter: close");
+
     executor.submit(
         () -> {
           try {
-            entryStore.close();
-            archiveTask.run();
+            // Clean out the queue.
+            entryStore.executeBatch();
+            entryStore.commit();
+
+            // run the archive before we close the entry store (as that will close out the connection)
+            archiveTask.run(entryStore.getConnection());
             archiveTask.close();
+            statusReporter.addInfo("AsyncEntryWriter: Archive task closed");
+
+            // CLose out the entry store.
+            entryStore.close();
+            statusReporter.addInfo("AsyncEntryWriter: Entry store closed");
           } catch (Exception e) {
-            statusReporter.addError("Shutdown", e);
+            statusReporter.addError("AsyncEntryWriter: Shutdown", e);
           } finally {
             executor.shutdown();
           }

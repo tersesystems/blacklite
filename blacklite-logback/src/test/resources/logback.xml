@@ -1,6 +1,6 @@
-<configuration debug="true">
+<configuration>
 
-    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+  <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
         <delay>1000</delay>
     </shutdownHook>
 
@@ -18,7 +18,7 @@
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
         <file>/tmp/blacklite-logback/live.db</file>
-        <properties>PRAGMA busy_timeout = 5000;</properties>
+        <batchInsertSize>1000</batchInsertSize>
 
         <archiver class="com.tersesystems.blacklite.archive.RollingArchiver">
             <file>/tmp/blacklite-logback/archive.db</file>
@@ -26,13 +26,13 @@
 
             <codec class="com.tersesystems.blacklite.codec.zstd.ZStdDictCodec">
                 <level>9</level>
-                <dictionary class="com.tersesystems.blacklite.codec.zstd.ZstdDictFileRepository">
+                <repository class="com.tersesystems.blacklite.codec.zstd.ZstdDictFileRepository">
                     <file>/tmp/blacklite-logback/dictionary</file>
-                </dictionary>
+                </repository>
             </codec>
 
             <rollingStrategy class="com.tersesystems.blacklite.logback.TimeBasedRollingStrategy">
-                <fileNamePattern>/tmp/blacklite-logback/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db</fileNamePattern>
+                <fileNamePattern>/tmp/blacklite-logback/archive.%d{yyyy-MM-dd}.db</fileNamePattern>
                 <maxHistory>20</maxHistory>
             </rollingStrategy>
 

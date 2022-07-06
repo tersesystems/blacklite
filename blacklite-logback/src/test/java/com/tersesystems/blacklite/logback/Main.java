@@ -18,16 +18,16 @@ public class Main {
     Thread.sleep(1000L);
 
     for (int f = 0; f < 1000; f++) {
-      // System.out.println("Going to sleep for 100L, f = " + f);
+      //System.out.println("Going to sleep for 10L, f = " + f);
       Thread.sleep(10L);
-      // System.out.println("Okay I'm back");
+      //System.out.println("Okay I'm back");
       for (int i = 0; i < 1000; i++) {
         logger.debug("debugging is fun!!! {}", Instant.now());
       }
     }
 
-    //    System.out.println("Sleeping for 1000L " + Instant.now());
+    System.out.println("Sleeping for 1000L " + Instant.now());
     System.out.println("ALL DONE " + Instant.now());
-    // Thread.sleep(100000L);
+    Thread.sleep(10000L);
   }
 }
