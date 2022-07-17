@@ -5,10 +5,11 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * A simple blocking writer that writes directly to the live repository.
+ * A simple blocking writer that writes directly to the live repository in batches.
  *
- * This is useful in situations like bulk loads, testing, and when it's
- * not acceptable to lose log entries in processing.
+ * If you want to commit on every single log entry, you should set the batch insert size to 1.
+ * This is useful in situations like bulk loads, testing, and when it's not acceptable to lose
+ * log entries in processing.
  */
 public class BlockingEntryWriter extends AbstractEntryWriter {
 

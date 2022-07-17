@@ -11,7 +11,11 @@ public interface EntryStoreConfig {
 
   void setProperties(Properties properties);
 
-  long getBatchInsertSize();
+  int getBatchInsertSize();
 
-  void setBatchInsertSize(long batchInsertSize);
+  void setBatchInsertSize(int batchInsertSize);
+
+  boolean isTracing();
+
+  void setTracing(boolean tracing);
 }

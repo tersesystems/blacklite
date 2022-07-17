@@ -6,7 +6,7 @@
 
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
 
-            <Archiver file="${sys:java.io.tmpdir}/blacklite/archive.db" archiveAfterRows="10000">
+            <Archiver file="${sys:java.io.tmpdir}/blacklite-log4j2/archive.db" archiveAfterRows="10000">
                 <FixedWindowRollingStrategy
                         filePattern="${sys:java.io.tmpdir}/blacklite-log4j2/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db"/>
                 <ArchiveRowsTriggeringPolicy>
