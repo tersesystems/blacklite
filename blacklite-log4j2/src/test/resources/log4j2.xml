@@ -1,29 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO" packages="com.tersesystems.blacklite.log4j2">
-    <appenders>
-        <Blacklite name="Blacklite">
-            <url>jdbc:sqlite:/${sys:java.io.tmpdir}/blacklite-log4j2/live.db</url>
+<Configuration status="DEBUG" packages="com.tersesystems.blacklite.log4j2">
+  <appenders>
+    <Blacklite name="Blacklite" file="/${sys:java.io.tmpdir}/blacklite-log4j2/live.db">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
 
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-
-            <Archiver file="${sys:java.io.tmpdir}/blacklite-log4j2/archive.db" archiveAfterRows="10000">
-                <FixedWindowRollingStrategy
-                        filePattern="${sys:java.io.tmpdir}/blacklite-log4j2/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db"/>
-                <ArchiveRowsTriggeringPolicy>
-                    <maximumNumRows>500000</maximumNumRows>
-                </ArchiveRowsTriggeringPolicy>
-            </Archiver>
-        </Blacklite>
-
-        <Async name="AsyncBlacklite">
-            <AppenderRef ref="Blacklite"/>
-            <!-- Use MPSCArrayQueue -->
-            <JCToolsBlockingQueue/>
-        </Async>
-    </appenders>
-    <Loggers>
-        <Root level="DEBUG">
-            <AppenderRef ref="Blacklite"/>
-        </Root>
-    </Loggers>
+      <Archiver file="${sys:java.io.tmpdir}/blacklite-log4j2/archive.db" archiveAfterRows="10000">
+        <FixedWindowRollingStrategy
+          filePattern="${sys:java.io.tmpdir}/blacklite-log4j2/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db"/>
+        <RowBasedTriggeringPolicy>
+          <maximumNumRows>500000</maximumNumRows>
+        </RowBasedTriggeringPolicy>
+      </Archiver>
+    </Blacklite>
+  </appenders>
+  <Loggers>
+    <Root level="DEBUG">
+      <AppenderRef ref="Blacklite"/>
+    </Root>
+  </Loggers>
 </Configuration>
