@@ -39,12 +39,14 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
 
   private final boolean tracing;
 
+  private boolean archiving = false;
+
   public AsyncEntryWriter(
       StatusReporter statusReporter, EntryStoreConfig config, Archiver archiver, String name)
       throws SQLException {
     super(statusReporter, config, archiver, name);
 
-    this.tracing = config.isTracing();
+    this.tracing = config.getTracing();
 
     // https://vmlens.com/articles/scale/scalability_queue/
     // https://twitter.com/forked_franz/status/1228773808317792256?lang=en
@@ -123,15 +125,18 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
 
   private void archive(AtomicLong lastRun) {
     if (lastRun.get() < System.currentTimeMillis() - 1000) {
-      if (tracing) {
-        statusReporter.addInfo("AsyncEntryWriter: archive lastRun " + lastRun.get());
+      if (! archiving) {
+        if (tracing) {
+          statusReporter.addInfo("AsyncEntryWriter: archive lastRun " + lastRun.get());
+        }
+        ArchiveResult result = archiveTask.run(entryStore.getConnection());
+        if (result instanceof ArchiveResult.Failure) {
+          final Exception e = ((ArchiveResult.Failure) result).getException();
+          statusReporter.addError("AsyncEntryWriter: Archive task returned failure: ", e);
+        }
+        archiving = false;
+        lastRun.set(System.currentTimeMillis());
       }
-      ArchiveResult result = archiveTask.run(entryStore.getConnection());
-      if (result instanceof ArchiveResult.Failure) {
-        final Exception e = ((ArchiveResult.Failure) result).getException();
-        statusReporter.addError("AsyncEntryWriter: Archive task returned failure: ", e);
-      }
-      lastRun.set(System.currentTimeMillis());
     }
   }
 

@@ -15,7 +15,7 @@ public interface EntryStoreConfig {
 
   void setBatchInsertSize(int batchInsertSize);
 
-  boolean isTracing();
+  boolean getTracing();
 
   void setTracing(boolean tracing);
 }

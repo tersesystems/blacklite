@@ -15,7 +15,6 @@ import java.util.Properties;
 /** A logback appender using blacklite as a backend. */
 public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     implements EntryStoreConfig, LoggerContextListener {
-  private EntryStoreConfig config;
 
   private Encoder<ILoggingEvent> encoder;
   private EntryWriter entryWriter;
@@ -41,7 +40,7 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     try {
       StatusReporter statusReporter = new LogbackStatusReporter(this);
 
-      config = new DefaultEntryStoreConfig();
+      EntryStoreConfig config = new DefaultEntryStoreConfig();
       config.setBatchInsertSize(batchInsertSize);
       config.setFile(file);
       config.setTracing(tracing);
@@ -119,8 +118,7 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     this.batchInsertSize = batchInsertSize;
   }
 
-  @Override
-  public boolean isTracing() {
+  public boolean getTracing() {
     return this.tracing;
   }
 

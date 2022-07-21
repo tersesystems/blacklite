@@ -48,7 +48,7 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
   }
 
   @Override
-  public boolean isTracing() {
+  public boolean getTracing() {
     return this.tracing;
   }
 

@@ -30,7 +30,7 @@ public class Main {
           //System.out.println("Okay I'm back");
           // this will all log within the same millisecond, so we'll
           // add a nanosecond instant so that we can see what's going on.
-          for (int i = 0; i < Math.abs(random.nextInt()) % 100; i++) {
+          for (int i = 0; i < Math.abs(random.nextInt()) % 100000; i++) {
             logger.debug("debugging is fun!!! {}", Instant.now());
           }
         }
@@ -45,9 +45,5 @@ public class Main {
     t1.start();
     t2.start();
     t3.start();
-
-    System.out.println("Sleeping for 1000L " + Instant.now());
-    System.out.println("ALL DONE " + Instant.now());
-    Thread.sleep(1000L);
   }
 }

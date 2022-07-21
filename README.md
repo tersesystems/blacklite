@@ -210,23 +210,40 @@ If not defined, the default archiver is the `DeletingArchiver` set to `10000` ro
 
 ```xml
 <configuration>
-    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
-        <delay>1000</delay>
-    </shutdownHook>
+ <property name="db.dir" value="${java.io.tmpdir}/blacklite-logback"/>
 
-    <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-        <file>logs/live.db</file>
+ <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+  <delay>1000</delay>
+ </shutdownHook>
 
-        <!-- commit every 1000 records -->
-        <batchInsertSize>1000</batchInsertSize>
+ <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
+  <tracing>false</tracing>
+  <file>${db.dir}/live.db</file>
+  <batchInsertSize>1000</batchInsertSize>
 
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-        </encoder>
-    </appender>
+  <archiver class="com.tersesystems.blacklite.archive.RollingArchiver">
+   <file>${db.dir}/archive.db</file>
+   <archiveAfterRows>10000</archiveAfterRows>
 
-    <root level="TRACE">
-        <appender-ref ref="BLACKLITE"/>
-    </root>
+   <rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">
+    <fileNamePattern>logs/archive.%i.db</fileNamePattern>
+    <minIndex>1</minIndex>
+    <maxIndex>10</maxIndex>
+   </rollingStrategy>
+
+   <triggeringPolicy class="com.tersesystems.blacklite.archive.RowBasedTriggeringPolicy">
+    <maximumNumRows>10000000</maximumNumRows>
+   </triggeringPolicy>
+  </archiver>
+
+  <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  </encoder>
+ </appender>
+
+ <root level="TRACE">
+  <appender-ref ref="BLACKLITE"/>
+ </root>
+
 </configuration>
 ```
 
@@ -354,19 +371,34 @@ The Log4J 2 is similar to the Logback appender:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO" packages="com.tersesystems.blacklite.log4j2">
+<Configuration status="INFO" packages="com.tersesystems.blacklite.log4j2,com.tersesystems.blacklite.log4j2.zstd">
  <appenders>
-  <Blacklite name="Blacklite">
-   <url>jdbc:sqlite:/${sys:java.io.tmpdir}/blacklite-log4j2/live.db</url>
-
+  <Console name="Console" target="SYSTEM_OUT">
    <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+  </Console>
 
-   <Archiver file="${sys:java.io.tmpdir}/blacklite-log4j2/archive.db" archiveAfterRows="10000">
+  <Blacklite name="Blacklite" file="/${sys:java.io.tmpdir}/blacklite-log4j2-zstd/live.db">
+   <LogstashLayout dateTimeFormatPattern="yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZ"
+                   eventTemplateUri="classpath:LogstashJsonEventLayoutV1.json"
+                   prettyPrintEnabled="false"/>
+
+   <Archiver file="/${sys:java.io.tmpdir}/blacklite-log4j2-zstd/archive.db">
+    <!--<ZStdCodec level="3"/>-->
+    <ZStdDictCodec>
+     <level>3</level>
+     <sampleSize>102400000</sampleSize>
+     <dictSize>10485760</dictSize>
+     <!-- <FileRepository file="${sys:java.io.tmpdir}/blacklite/dictionary"/> -->
+     <SqliteRepository url="jdbc:sqlite:${sys:java.io.tmpdir}/blacklite-log4j2-zstd/dict.db"/>
+    </ZStdDictCodec>
+
     <FixedWindowRollingStrategy
-            filePattern="${sys:java.io.tmpdir}/blacklite-log4j2/archive.%d{yyyy-MM-dd-hh-mm.SSS}.db"/>
-    <ArchiveRowsTriggeringPolicy>
+            min="1"
+            max="5"
+            filePattern="${sys:java.io.tmpdir}/blacklite-log4j2-zstd/archive-%i.db"/>
+    <RowBasedTriggeringPolicy>
      <maximumNumRows>500000</maximumNumRows>
-    </ArchiveRowsTriggeringPolicy>
+    </RowBasedTriggeringPolicy>
    </Archiver>
   </Blacklite>
  </appenders>

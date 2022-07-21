@@ -19,7 +19,7 @@
     </appender>
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-        <tracing>false</tracing>
+        <tracing>true</tracing>
         <file>${db.dir}/live.db</file>
         <batchInsertSize>1000</batchInsertSize>
 
