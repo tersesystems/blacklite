@@ -11,7 +11,8 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
 
   private String file;
   private Properties properties = new Properties(defaults);
-  private long batchInsertSize = 1000;
+  private int batchInsertSize = 1000;
+  private boolean tracing = false;
 
   @Override
   public String getFile() {
@@ -37,13 +38,23 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
   }
 
   @Override
-  public long getBatchInsertSize() {
+  public int getBatchInsertSize() {
     return this.batchInsertSize;
   }
 
   @Override
-  public void setBatchInsertSize(long batchInsertSize) {
+  public void setBatchInsertSize(int batchInsertSize) {
     this.batchInsertSize = batchInsertSize;
+  }
+
+  @Override
+  public boolean getTracing() {
+    return this.tracing;
+  }
+
+  @Override
+  public void setTracing(boolean tracing) {
+    this.tracing = tracing;
   }
 
   private static SQLiteConfig liveConfig() {

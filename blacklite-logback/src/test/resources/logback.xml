@@ -1,4 +1,6 @@
-<configuration debug="true">
+<configuration>
+
+    <property name="db.dir" value="${java.io.tmpdir}/blacklite-logback"/>
 
     <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
         <delay>1000</delay>
@@ -11,28 +13,46 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>/tmp/blacklite/entries.json</file>
+        <file>${db.dir}/entries.json</file>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
         </encoder>
     </appender>
 
     <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-        <file>/tmp/blacklite-logback/live.db</file>
+        <tracing>true</tracing>
+        <file>${db.dir}/live.db</file>
         <batchInsertSize>1000</batchInsertSize>
 
         <archiver class="com.tersesystems.blacklite.archive.RollingArchiver">
-            <file>/tmp/blacklite-logback/archive.db</file>
+            <file>${db.dir}/archive.db</file>
             <archiveAfterRows>10000</archiveAfterRows>
+
+            <rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">
+              <fileNamePattern>logs/archive.%i.db</fileNamePattern>
+              <minIndex>1</minIndex>
+              <maxIndex>10</maxIndex>
+            </rollingStrategy>
+
+            <triggeringPolicy class="com.tersesystems.blacklite.archive.RowBasedTriggeringPolicy">
+              <maximumNumRows>10000000</maximumNumRows>
+            </triggeringPolicy>
+        </archiver>
+
+        <!--
+
+        <archiver class="com.tersesystems.blacklite.archive.RollingArchiver">
+            <file>${db.dir}/archive.db</file>
+            <archiveAfterRows>1000000</archiveAfterRows>
 
             <codec class="com.tersesystems.blacklite.codec.zstd.ZStdDictCodec">
                 <level>9</level>
                 <repository class="com.tersesystems.blacklite.codec.zstd.ZstdDictFileRepository">
-                    <file>/tmp/blacklite-logback/dictionary</file>
+                    <file>${db.dir}/dictionary</file>
                 </repository>
             </codec>
 
             <rollingStrategy class="com.tersesystems.blacklite.logback.TimeBasedRollingStrategy">
-                <fileNamePattern>/tmp/blacklite-logback/archive.%d{yyyy-MM-dd}.db</fileNamePattern>
+                <fileNamePattern>${db.dir}/archive.%d{yyyy-MM-dd}.db</fileNamePattern>
                 <maxHistory>20</maxHistory>
             </rollingStrategy>
 
@@ -40,6 +60,7 @@
                 <maximumNumRows>500000</maximumNumRows>
             </triggeringPolicy>
         </archiver>
+        -->
 
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
         </encoder>

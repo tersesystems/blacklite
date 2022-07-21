@@ -15,14 +15,14 @@ import java.util.Properties;
 /** A logback appender using blacklite as a backend. */
 public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     implements EntryStoreConfig, LoggerContextListener {
-  private EntryStoreConfig config;
 
   private Encoder<ILoggingEvent> encoder;
   private EntryWriter entryWriter;
   private Archiver archiver;
   private String file;
   private Properties properties;
-  private long batchInsertSize;
+  private int batchInsertSize;
+  private boolean tracing = false;
 
   public Encoder<ILoggingEvent> getEncoder() {
     return encoder;
@@ -40,9 +40,10 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     try {
       StatusReporter statusReporter = new LogbackStatusReporter(this);
 
-      config = new DefaultEntryStoreConfig();
+      EntryStoreConfig config = new DefaultEntryStoreConfig();
       config.setBatchInsertSize(batchInsertSize);
       config.setFile(file);
+      config.setTracing(tracing);
       if (properties != null) {
         config.setProperties(properties);
       }
@@ -108,13 +109,22 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   }
 
   @Override
-  public long getBatchInsertSize() {
+  public int getBatchInsertSize() {
     return this.batchInsertSize;
   }
 
   @Override
-  public void setBatchInsertSize(long batchInsertSize) {
+  public void setBatchInsertSize(int batchInsertSize) {
     this.batchInsertSize = batchInsertSize;
+  }
+
+  public boolean getTracing() {
+    return this.tracing;
+  }
+
+  @Override
+  public void setTracing(boolean tracing) {
+    this.tracing = tracing;
   }
 
   public Archiver getArchiver() {

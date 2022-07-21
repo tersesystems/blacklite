@@ -60,7 +60,7 @@ public class RollingArchiver extends AbstractArchiver implements FileArchiver {
 
   @Override
   public ArchiveResult archive(Connection conn) {
-    statusReporter.addInfo("rollingArchiver.archive start ");
+    statusReporter.addInfo("RollingArchiver: archive start ");
     ArchiveResult result;
     try {
       Function codecFunction =
@@ -76,7 +76,7 @@ public class RollingArchiver extends AbstractArchiver implements FileArchiver {
     } catch (Exception e) {
       result = new ArchiveResult.Failure(e);
     }
-    statusReporter.addInfo("rollingArchiver.archive end " + result);
+    statusReporter.addInfo("RollingArchiver: archive end " + result);
     return result;
   }
 

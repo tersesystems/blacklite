@@ -204,29 +204,46 @@ You should always use a `shutdownHook` to allow Logback to drain the queue befor
 
 The appender consists of a `file` property, and an `encoder` which encodes the bytes written to the `content` field in an entry.
 
-The `batchInsertSize` property determines the number of entries to batch before writing to the database.  This setting improves the throughput of inserts, but may result in a delay if logging volume is low.
+The `batchInsertSize` property determines the number of entries to batch before writing to the database.  This is a highwater mark that only applies when the number of inserts has gone over a certain point without idling -- this situation only usually applies when using an archiver which will take over the connection for the duration.  When archiving, new entries will buffer in the queue, and then be drained and inserted in batches.   Under normal circumstances, when the thread is idle, it will `executeBatch/commit` any outstanding inserts, meaning you will see database entries immediately.
 
 If not defined, the default archiver is the `DeletingArchiver` set to `10000` rows.
 
 ```xml
 <configuration>
-    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
-        <delay>1000</delay>
-    </shutdownHook>
+ <property name="db.dir" value="${java.io.tmpdir}/blacklite-logback"/>
 
-    <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-        <file>logs/live.db</file>
+ <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+  <delay>1000</delay>
+ </shutdownHook>
 
-        <!-- insert on every row -->
-        <batchInsertSize>1</batchInsertSize>
+ <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
+  <tracing>false</tracing>
+  <file>${db.dir}/live.db</file>
+  <batchInsertSize>1000</batchInsertSize>
 
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-        </encoder>
-    </appender>
+  <archiver class="com.tersesystems.blacklite.archive.RollingArchiver">
+   <file>${db.dir}/archive.db</file>
+   <archiveAfterRows>10000</archiveAfterRows>
 
-    <root level="TRACE">
-        <appender-ref ref="BLACKLITE"/>
-    </root>
+   <rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">
+    <fileNamePattern>logs/archive.%i.db</fileNamePattern>
+    <minIndex>1</minIndex>
+    <maxIndex>10</maxIndex>
+   </rollingStrategy>
+
+   <triggeringPolicy class="com.tersesystems.blacklite.archive.RowBasedTriggeringPolicy">
+    <maximumNumRows>10000000</maximumNumRows>
+   </triggeringPolicy>
+  </archiver>
+
+  <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  </encoder>
+ </appender>
+
+ <root level="TRACE">
+  <appender-ref ref="BLACKLITE"/>
+ </root>
+
 </configuration>
 ```
 
@@ -350,55 +367,50 @@ Time Based Rolling Strategy uses a date system, which will roll over renaming th
 
 ### Log4J 2
 
-Log4J 2 uses a blocking appender, so it should be wrapped behind an `Async` appender:
+The Log4J 2 is similar to the Logback appender:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO" packages="com.tersesystems.blacklite.log4j2,com.tersesystems.blacklite.log4j2.zstd">
-    <appenders>
-        <Blacklite name="Blacklite">
-            <file>/${sys:java.io.tmpdir}/blacklite/log4j.db</file>
+ <appenders>
+  <Console name="Console" target="SYSTEM_OUT">
+   <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+  </Console>
 
-            <!-- https://mvnrepository.com/artifact/com.vlkan.log4j2/log4j2-logstash-layout -->
-            <LogstashLayout dateTimeFormatPattern="yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZ"
-                            eventTemplateUri="classpath:LogstashJsonEventLayoutV1.json"
-                            prettyPrintEnabled="false"/>
+  <Blacklite name="Blacklite" file="/${sys:java.io.tmpdir}/blacklite-log4j2-zstd/live.db">
+   <LogstashLayout dateTimeFormatPattern="yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZ"
+                   eventTemplateUri="classpath:LogstashJsonEventLayoutV1.json"
+                   prettyPrintEnabled="false"/>
 
-            <Archiver file="/tmp/blacklite/archive.db" archiveAfterRows="10000">
-                <ZStdDictCodec>
-                    <level>3</level>
-                    <sampleSize>102400000</sampleSize>
-                    <dictSize>10485760</dictSize>
-                    <!-- <FileRepository file="${sys:java.io.tmpdir}/blacklite/dictionary"/> -->
-                    <SqliteRepository url="jdbc:sqlite:${sys:java.io.tmpdir}/blacklite/dict.db"/>
-                </ZStdDictCodec>
+   <Archiver file="/${sys:java.io.tmpdir}/blacklite-log4j2-zstd/archive.db">
+    <!--<ZStdCodec level="3"/>-->
+    <ZStdDictCodec>
+     <level>3</level>
+     <sampleSize>102400000</sampleSize>
+     <dictSize>10485760</dictSize>
+     <!-- <FileRepository file="${sys:java.io.tmpdir}/blacklite/dictionary"/> -->
+     <SqliteRepository url="jdbc:sqlite:${sys:java.io.tmpdir}/blacklite-log4j2-zstd/dict.db"/>
+    </ZStdDictCodec>
 
-                <FixedWindowRollingStrategy
-                        min="1"
-                        max="5"
-                        filePattern="${sys:java.io.tmpdir}/blacklite/archive-%i.db"/>
-                <RowBasedTriggeringPolicy>
-                    <maximumNumRows>100000</maximumNumRows>
-                </RowBasedTriggeringPolicy>
-            </Archiver>
-        </Blacklite>
-
-        <Async name="AsyncBlacklite">
-            <AppenderRef ref="Blacklite"/>
-            <JCToolsBlockingQueue/>
-        </Async>
-    </appenders>
-    <Loggers>
-        <Root level="DEBUG">
-            <AppenderRef ref="AsyncBlacklite"/>
-        </Root>
-    </Loggers>
+    <FixedWindowRollingStrategy
+            min="1"
+            max="5"
+            filePattern="${sys:java.io.tmpdir}/blacklite-log4j2-zstd/archive-%i.db"/>
+    <RowBasedTriggeringPolicy>
+     <maximumNumRows>500000</maximumNumRows>
+    </RowBasedTriggeringPolicy>
+   </Archiver>
+  </Blacklite>
+ </appenders>
+ <Loggers>
+  <Root level="DEBUG">
+   <AppenderRef ref="Blacklite"/>
+  </Root>
+ </Loggers>
 </Configuration>
 ```
 
-It is broadly similar to the Logback system, with the same settings.
-
-The `batchInsertSize` property determines the number of entries to batch before writing to the database.  This setting improves the throughput of inserts, but may result in a delay if logging volume is low.
+It is broadly similar to the Logback system, with the same settings. .
 
 ## Benchmarks
 
@@ -434,7 +446,7 @@ AsyncEntryWriterBenchmark.benchmark           avgt   10      11.920 ±     0.099
 BlockingEntryWriterBenchmark.benchmark        avgt   10       1.057 ±     0.010  ns/op
 ```
 
-The async entry writer takes 11 nanoseconds to add the entry to the queue so that the background thread can write it.  The blocking entry writer takes 1 nanosecond, but then the SQLite write itself must be added onto that, which is roughly between 1k - 3k nanoseconds, depending on batch commits.
+The async entry writer takes 11 nanoseconds to add the entry to the queue so that the background thread can write it.  The blocking entry writer (not used by the appender) takes 1 nanosecond, but then the SQLite write itself must be added onto that, which is roughly between 1k - 3k nanoseconds, depending on batch commits.
 
 Because the async entry writer takes 11 nanoseconds and SQLite writes are batched on another thread, the functional impact to the application is roughly the same as writing to a memory mapped file, with the benefit of having a searchable database at the end of it.
 

@@ -37,9 +37,7 @@ public class Log4JBlackliteAppender extends AbstractAppender {
       throw new IllegalStateException("Null layout");
     }
     StatusReporter statusReporter = new Log4JStatusReporter(this.getHandler());
-    // Use a blocking entry writer, with the assumption that an AsyncAppender will wrap it.
-    // https://logging.apache.org/log4j/2.x/manual/appenders.html#AsyncAppender
-    this.entryWriter = new BlockingEntryWriter(statusReporter, config, archiver, name);
+    this.entryWriter = new AsyncEntryWriter(statusReporter, config, archiver, name);
   }
 
   @PluginFactory
