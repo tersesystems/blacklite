@@ -6,5 +6,5 @@ dependencies {
     api project(':blacklite-core')
 
     // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
-    api group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.2'
+    api 'org.apache.logging.log4j:log4j-core:2.18.0'
 }

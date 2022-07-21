@@ -20,8 +20,8 @@ public class Main {
       }
     }
 
-    //    System.out.println("Sleeping for 1000L " + Instant.now());
+    System.out.println("Sleeping for 1000L " + Instant.now());
     System.out.println("ALL DONE " + Instant.now());
-    // Thread.sleep(100000L);
+    Thread.sleep(1000L);
   }
 }
