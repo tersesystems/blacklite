@@ -1,20 +1,14 @@
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        mavenLocal() //for local testing of shipkit
-        maven { url "https://repo.grails.org/grails/core/" }
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath "org.kordamp.gradle:java-project-gradle-plugin:0.45.0"
-        classpath "org.shipkit:shipkit-auto-version:1.+"
-        classpath "org.shipkit:shipkit-changelog:1.+"
-        classpath "io.github.gradle-nexus:publish-plugin:1.0.0"
-    }
+plugins {
+    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
+    id 'com.diffplug.spotless'  version '6.8.0'
+    id "maven-publish"
 }
 
-plugins {
-    id 'com.diffplug.gradle.spotless'  version '3.24.3'
+apply from: "gradle/release.gradle"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
 }
 
 spotless {
@@ -24,20 +18,14 @@ spotless {
     }
 }
 
-apply from: "gradle/release.gradle"
+subprojects { subproj ->
+    apply plugin: 'java-library'
+    apply plugin: 'com.diffplug.spotless'
 
-// https://kordamp.org/kordamp-gradle-plugins/#_projects_dsl
-allprojects {
     repositories {
+        //mavenLocal()
         mavenCentral()
     }
-}
-
-subprojects { subproj ->
-    apply plugin: 'java'
-    apply plugin: 'com.diffplug.gradle.spotless'
-
-    group 'com.tersesystems.blacklite'
 
     dependencies {
         testImplementation 'org.apiguardian:apiguardian-api:1.1.0'
