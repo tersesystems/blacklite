@@ -13,7 +13,7 @@ jar {
 }
 
 task run(type: JavaExec, dependsOn: classes) {
-    main = mainClassName
+    mainClass = mainClassName
     classpath sourceSets.main.runtimeClasspath
     classpath configurations.implementation
 }

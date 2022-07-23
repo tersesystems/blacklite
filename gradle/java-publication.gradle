@@ -20,12 +20,12 @@ publishing { //https://docs.gradle.org/current/userguide/publishing_maven.html
 
             pom {
                 name = tasks.jar.archiveBaseName
-                description = "Blacklite"
-                url = "https://github.com/tersesystems/blacklite"
+                description = "Java Structured Logging API"
+                url = "https://github.com/tersesystems/echopraxia"
                 licenses {
                     license {
                         name = 'Apache2'
-                        url = 'https://github.com/tersesystems/blacklite/blog/main/LICENSE'
+                        url = 'https://github.com/tersesystems/echopraxia/blob/master/LICENSE'
                     }
                 }
                 developers {
@@ -36,7 +36,7 @@ publishing { //https://docs.gradle.org/current/userguide/publishing_maven.html
                     }
                 }
                 scm {
-                    url = 'https://github.com/tersesystems/blacklite.git'
+                    url = 'https://github.com/tersesystems/echopraxia.git'
                 }
             }
         }
