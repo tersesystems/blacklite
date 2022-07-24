@@ -9,7 +9,6 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -21,8 +20,7 @@ import java.util.concurrent.locks.LockSupport;
  * The entry writer will insert items to the entry store as it receives them, calling executeBatch()
  * when inserts reach the batch entry size.
  *
- * When idle, the queue will call flush() on the entry store, and call the archive task every
- * 1_000_000_000 nanoseconds.
+ * When idle, the queue will call flush() on the entry store, and call the archive task every second.
  *
  * The queue is unbounded because when an archiver is active, the backlog can
  * get very large, but will drain extremely quickly once archiver has completed.
@@ -40,6 +38,10 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
   private final boolean tracing;
 
   private boolean archiving = false;
+
+  private long inserts = 0;
+  private long lastRun = System.currentTimeMillis();
+
 
   public AsyncEntryWriter(
       StatusReporter statusReporter, EntryStoreConfig config, Archiver archiver, String name)
@@ -65,9 +67,6 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
 
     executor.execute(
         () -> {
-          final AtomicLong inserts = new AtomicLong(0);
-          final AtomicLong lastRun = new AtomicLong(System.currentTimeMillis());
-
           // called when there are no elements in the queue.
           MessagePassingQueue.WaitStrategy onIdle =
               idleCounter -> {
@@ -75,11 +74,11 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
                 // This means that batchInsertSize is more of a highwater mark:
                 // "you MUST commit now after this number of inserts" etc
                 try {
-                  commit(inserts);
+                  commit();
                 } catch (SQLException e) {
                   statusReporter.addError(e.getMessage(), e);
                 }
-                archive(lastRun);
+                archive();
 
                 // We only want to run the idle loop so often, so we'll sleep it.
                 // parkNanos is going to park for a microsecond at minimum, maybe even more.
@@ -93,12 +92,13 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
               e -> {
                 try {
                   entryStore.insert(e.epochSecond, e.nanos, e.level, e.content);
-
+                  inserts = inserts + 1;
                   // Always flush on batch insert size, even if we've never been idle.
-                  if (inserts.incrementAndGet() >= batchInsertSize) {
-                    commit(inserts);
+                  if (inserts >= batchInsertSize) {
+                    commit();
+
                   }
-                  archive(lastRun);
+                  archive();
                 } catch (SQLException ex) {
                   statusReporter.addError(ex.getMessage(), ex);
                 }
@@ -110,8 +110,8 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
         });
   }
 
-  private void commit(AtomicLong inserts) throws SQLException {
-    final long i = inserts.get();
+  private void commit() throws SQLException {
+    final long i = inserts;
     if (i > 0) {
       if (tracing) {
         final int size = queue.size();
@@ -119,15 +119,15 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
       }
       entryStore.executeBatch();
       entryStore.commit();
-      inserts.set(0);
+      inserts = 0;
     }
   }
 
-  private void archive(AtomicLong lastRun) {
-    if (lastRun.get() < System.currentTimeMillis() - 1000) {
+  private void archive() {
+    if (lastRun < System.currentTimeMillis() - 1000) {
       if (! archiving) {
         if (tracing) {
-          statusReporter.addInfo("AsyncEntryWriter: archive lastRun " + lastRun.get());
+          statusReporter.addInfo("AsyncEntryWriter: archive lastRun " + lastRun);
         }
         ArchiveResult result = archiveTask.run(entryStore.getConnection());
         if (result instanceof ArchiveResult.Failure) {
@@ -135,7 +135,7 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
           statusReporter.addError("AsyncEntryWriter: Archive task returned failure: ", e);
         }
         archiving = false;
-        lastRun.set(System.currentTimeMillis());
+        lastRun = System.currentTimeMillis();
       }
     }
   }

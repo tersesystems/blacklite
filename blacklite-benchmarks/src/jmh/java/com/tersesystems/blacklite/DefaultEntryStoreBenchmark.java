@@ -12,7 +12,7 @@ import org.openjdk.jmh.annotations.*;
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Warmup(iterations = 10, time = 1)
 @Measurement(iterations = 20, time = 1)
-@Fork(1)
+@Fork(3)
 @State(Scope.Benchmark)
 public class DefaultEntryStoreBenchmark {
 
@@ -23,6 +23,8 @@ public class DefaultEntryStoreBenchmark {
   int level = 5000;
   Path tempDirectoryPath;
   Connection conn;
+
+  private int inserts = 0;
 
   @Setup
   public void setUp() throws Exception {
@@ -41,8 +43,20 @@ public class DefaultEntryStoreBenchmark {
   }
 
   @Benchmark
-  public void benchmark() throws SQLException {
+  public void insertAndBatchCommit() throws SQLException {
     repository.insert(now.getEpochSecond(), now.getNano(), level, content);
+    inserts += 1;
+    if (inserts == 1000) {
+      repository.executeBatch();
+      repository.commit();
+      inserts = 0;
+    }
+  }
+
+  @Benchmark
+  public void insertAndCommit() throws SQLException {
+    repository.insert(now.getEpochSecond(), now.getNano(), level, content);
+    repository.executeBatch();
     repository.commit();
   }
 }
