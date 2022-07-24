@@ -4,20 +4,26 @@
 output = [
     link(shield('Maven central', 'mavencentral', '{{group}}:{{artifactIdMaven}}', 'blue'), 'https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22{{group}}%22%20AND%20a%3A%22{{artifactIdMaven}}%22'),
 	link(shield('License Apache-2.0', 'license', 'Apache-2.0', 'blue'), 'https://www.tldrlegal.com/l/apache2'),
-	'',
-	link(image('Travis CI', 'https://travis-ci.org/tersesystems/blacklite.svg?branch=master'), 'https://travis-ci.org/tersesystems/blacklite')
+	''
 	].join('\n')
 -->
 [![Maven central](https://img.shields.io/badge/mavencentral-com.tersesystems.blacklite%3Ablacklite--logback-blue.svg)](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.tersesystems.blacklite%22%20AND%20a%3A%22blacklite-logback%22)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://www.tldrlegal.com/l/apache2)
-
-[![Travis CI](https://travis-ci.org/tersesystems/blacklite.svg?branch=master)](https://travis-ci.org/tersesystems/blacklite)
 <!---freshmark /shields -->
 
-Blacklite is an appender that writes to a [SQLite](https://www.sqlite.org/index.html) database, configured for writes at speeds
-**roughly equivalent to an in-memory ring buffer** by using [memory mapping](https://www.sqlite.org/mmap.html) and
-[write ahead logging](https://sqlite.org/wal.html).  Blacklite supports both [Logback](http://logback.qos.ch/) and
-[Log4J 2](https://logging.apache.org/log4j/2.x/).  Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
+[![CI](https://github.com/tersesystems/blacklite/actions/workflows/gradle.yml/badge.svg)](https://github.com/tersesystems/blacklite/actions/workflows/gradle.yml)
+
+Blacklite is an appender that is intended for cases where you need a [ring buffer](http://www.exampler.com/writing/ring-buffer.pdf) or buffer of logging data, and also want the option of querying logs from different processes with a built in query language.
+
+Blacklite provides this functionality by writing to a [SQLite](https://www.sqlite.org/index.html) database, configured for writes at speeds **roughly equivalent to an in-memory ring buffer** by using [memory mapping](https://www.sqlite.org/mmap.html) and [write ahead logging](https://sqlite.org/wal.html).
+
+Practically speaking, with some decent hardware you can budget around 800 debugging statements per 1 ms request -- see benchmarks.  Using [conditional logging](https://github.com/tersesystems/echopraxia#why-conditions), you can turn on debug logging in production and get a complete picture of what a single request is doing.  See [echopraxia-examples](https://github.com/tersesystems/echopraxia-examples) and [terse-logback-showcase](https://github.com/tersesystems/terse-logback-showcase) for a live demonstration.
+
+Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
+
+## Core Features
+
+Blacklite supports both [Logback](http://logback.qos.ch/) and [Log4J 2](https://logging.apache.org/log4j/2.x/).
 
 Blacklite writes to a single table with the following structure:
 
@@ -34,20 +40,14 @@ The `content` column contains the log entry itself, as bytes.  The only other co
 are no indexes or autoincrement field.  Logs stored in Blacklite are the same size as raw files.  In addition, using
 SQLite file means [total compatibility](https://sqlite.org/locrsf.html) and support over all platforms.
 
+## Archiving and Compression
+
 In addition, there are a number of features that Blacklite has above and beyond raw append speed:
 
 * Built-in archiving and rollover based on number of rows.
 * Automatic ZStandard dictionary training and compression for 4x disk space savings in archives.
 * `blacklite-core` module allows direct entry writing with no logging framework needed.
 * Database reader to search logs from command line by "natural language" date ranges.
-
-Blacklite is designed for ubiquitous logging and "logging-aware" applications:
-
-* You want to search through logs in a given date ranges and level.
-* You want to analyze number and types of messages produced by the logging framework.
-* You want an always-available buffer debugging/tracing that can be queried and "dumped" on application error.
-
-Practically speaking, with some decent hardware you can budget around 800 debugging statements per 1 ms request.  Using [conditional logging](https://tersesystems.github.io/blindsight/usage/conditional.html), you can turn on debugging in production and get a complete picture of what a single request is doing.  See [terse-logback-showcase](https://github.com/tersesystems/terse-logback-showcase) for a live demonstration.
 
 Blacklite also provides a codec for [zstandard](https://facebook.github.io/zstd/), using
 the [zstd-jni](https://github.com/luben/zstd-jni) library. which is extremely fast and can be tweaked to be competitive
@@ -89,7 +89,7 @@ But still have the same number of records:
 
 ## Reading
 
-Providing data in SQLite format means you can leverage tools built using SQLite.
+Providing data in SQLite format means you can leverage tools built using SQLite.  I typically connect [DB Browser](https://sqlitebrowser.org/) as the default application for `*.db` files in IntelliJ IDEA so double clicking will bring up GUI.
 
 ### Editor / IDE Plugins
 
@@ -188,8 +188,11 @@ SBT installation is fairly straightforward.
 ```sbt
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-logback" % "<latestVersion>"
 libraryDependencies += "com.tersesystems.blacklite" % "blacklite-codec-zstd" % "<latestVersion>"
+```
 
-// or log4j
+Or log4j:
+
+```sbt
 //libraryDependencies += "com.tersesystems.blacklite" % "blacklite-log4j" % "<latestVersion>"
 //libraryDependencies += "com.tersesystems.blacklite" % "blacklite-log4j2-codec-zstd" % "<latestVersion>"
 ```
@@ -198,7 +201,7 @@ libraryDependencies += "com.tersesystems.blacklite" % "blacklite-codec-zstd" % "
 
 ### Logback
 
-The logback appender uses [JCTools](https://jctools.github.io/JCTools/) internally as an asynchronous queue.  This means you don't need to use an `AsyncAppender` on top.
+The logback appender uses [JCTools](https://jctools.github.io/JCTools/) internally as an asynchronous queue.  This means you don't need to use an `AsyncAppender` or `LoggingEventAsyncDisruptorAppender` on top.
 
 You should always use a `shutdownHook` to allow Logback to drain the queue before exiting.
 
@@ -217,23 +220,10 @@ If not defined, the default archiver is the `DeletingArchiver` set to `10000` ro
  </shutdownHook>
 
  <appender name="BLACKLITE" class="com.tersesystems.blacklite.logback.BlackliteAppender">
-  <tracing>false</tracing>
   <file>${db.dir}/live.db</file>
-  <batchInsertSize>1000</batchInsertSize>
 
-  <archiver class="com.tersesystems.blacklite.archive.RollingArchiver">
-   <file>${db.dir}/archive.db</file>
-   <archiveAfterRows>10000</archiveAfterRows>
-
-   <rollingStrategy class="com.tersesystems.blacklite.logback.FixedWindowRollingStrategy">
-    <fileNamePattern>logs/archive.%i.db</fileNamePattern>
-    <minIndex>1</minIndex>
-    <maxIndex>10</maxIndex>
-   </rollingStrategy>
-
-   <triggeringPolicy class="com.tersesystems.blacklite.archive.RowBasedTriggeringPolicy">
-    <maximumNumRows>10000000</maximumNumRows>
-   </triggeringPolicy>
+  <archiver class="com.tersesystems.blacklite.archive.DeletingArchiver">
+   <archiveAfterRows>10000000</archiveAfterRows>
   </archiver>
 
   <encoder class="net.logstash.logback.encoder.LogstashEncoder">
