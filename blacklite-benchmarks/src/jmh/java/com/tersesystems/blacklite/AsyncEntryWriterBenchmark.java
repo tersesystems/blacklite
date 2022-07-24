@@ -13,7 +13,7 @@ import org.openjdk.jmh.annotations.*;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 10, time = 1)
-@Fork(1)
+@Fork(3)
 @State(Scope.Benchmark)
 public class AsyncEntryWriterBenchmark {
 
