@@ -17,8 +17,8 @@ dependencies {
     implementation project(':blacklite-core')
     implementation project(':blacklite-codec-zstd')
 
-    jmhImplementation 'org.openjdk.jmh:jmh-core:1.23'
-    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
+    jmhImplementation 'org.openjdk.jmh:jmh-core:1.35'
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.35'
 
     // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
     implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.32.3.2'
@@ -35,8 +35,8 @@ task jmh(type: JavaExec, dependsOn: jmhClasses) {
     // easier to use the oracle JDK because it has debug symbols available
     // https://github.com/jvm-profiling-tools/async-profiler#installing-debug-symbols
     // sdk use java 17.0.3-oracle
-    args = ['-prof', 'async:output=flamegraph']
-    //args = ['-prof', 'gc', '-rf', 'json']
+    //args = ['-prof', 'async:output=flamegraph']
+    args = ['-prof', 'gc', '-rf', 'json']
     //args = ['-prof', 'async:output=async-profiler.txt;alloc=2m']
 }
 

@@ -2,6 +2,7 @@ package com.tersesystems.blacklite;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -9,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 
 @BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.SECONDS)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 10, time = 1)
 @Measurement(iterations = 20, time = 1)
 @Fork(3)
@@ -28,7 +29,8 @@ public class DefaultEntryStoreBenchmark {
 
   @Setup
   public void setUp() throws Exception {
-    tempDirectoryPath = Files.createTempDirectory("blacklite");
+    Path tmpfsDir = Paths.get("/dev/shm");
+    tempDirectoryPath = Files.createTempDirectory(tmpfsDir, null);
     String file = tempDirectoryPath.resolve("test.db").toAbsolutePath().toString();
     EntryStoreConfig config = new DefaultEntryStoreConfig();
     config.setFile(file);
@@ -40,6 +42,7 @@ public class DefaultEntryStoreBenchmark {
   public void tearDown() throws Exception {
     repository.close();
     Files.deleteIfExists(tempDirectoryPath.resolve("test.db"));
+    Files.delete(tempDirectoryPath);
   }
 
   @Benchmark
