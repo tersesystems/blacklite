@@ -4,6 +4,8 @@ import com.tersesystems.blacklite.*;
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
+
+import com.tersesystems.blacklite.archive.Archiver;
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Property;
@@ -29,7 +31,7 @@ public class Log4JBlackliteAppender extends AbstractAppender {
       Layout<? extends Serializable> layout,
       boolean ignoreExceptions,
       Property[] properties,
-      Log4J2Archiver archiver,
+      Archiver archiver,
       EntryStoreConfig config)
       throws SQLException {
     super(name, filter, layout, ignoreExceptions, properties);
@@ -46,7 +48,7 @@ public class Log4JBlackliteAppender extends AbstractAppender {
           final String name,
       @PluginAttribute("file") final String file,
       @PluginAttribute(value = "batchInsertSize", defaultInt = 1000) final int batchInsertSize,
-      @PluginElement("archiver") final Log4J2Archiver archiver,
+      @PluginElement("archiver") final Archiver archiver,
       @PluginElement("layout") final Layout<? extends Serializable> layout,
       @PluginElement("filter") final Filter filter)
       throws SQLException {
