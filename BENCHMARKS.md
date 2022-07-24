@@ -2,6 +2,8 @@
 
 Benchmarks are notoriously unreliable, but this should give a general idea of effectiveness.
 
+Benchmarks are provided with some caveats. There are a number of [presentations](https://www.cs.utexas.edu/~jaya/slides/apsys17-sqlite-slides.pdf) on the complexities of benchmarking SQLite.  Benchmarking can vary considerably depending on your hardware, and in particular IO writes may be different given a 250 MB/sec SSD available to a cloud instance.  If you're writing more log entries than your IO throughput then memory mapping can offload some of it, but at some point you will saturate something and God's Own Backpressure will be applied.
+
 ## Setup
 
 All benchmarks were run on a Dell XPS 15 running Linux.

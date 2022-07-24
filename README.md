@@ -414,51 +414,7 @@ It is broadly similar to the Logback system, with the same settings. .
 
 ## Benchmarks
 
-Benchmarks are provided with some caveats. There are a number of [presentations](https://www.cs.utexas.edu/~jaya/slides/apsys17-sqlite-slides.pdf) on the complexities of benchmarking SQLite.  Benchmarking can vary considerably depending on your hardware, and in particular IO writes may be different given a 250 MB/sec SSD available to a cloud instance.  If you're writing more log entries than your IO throughput then memory mapping can offload some of it, but at some point you will saturate something and God's Own Backpressure will be applied.
-
-### Platform
-
-Using my local laptop:
-
-* Dell XPS Laptop running Elementary 5.1.7
-* Built on Ubuntu 18.04.4 LTS
-* Intel® Core™ i7-9750H CPU @ 2.60GHz × 6
-* NVMe M2 SSD
-
-### Throughput
-
-The first question is how many log entries per second can be written to SQLite, in total.  This happens in a background thread, so the throughput is more significant than the latency here.
-
-```
-Benchmark                                     Mode  Cnt       Score       Error  Units
-DefaultEntryStoreBenchmark.benchmark         thrpt   20  803206.197 ± 54816.464  ops/s
-```
-
-The error margin is large because commits are batched and don't happen on every write.  For comparison, a file appender with `immediateFlush=false` is roughly [~1789 ops/ms](https://github.com/wsargent/slf4j-benchmark#throughput-benchmarks).
-
-### Latency
-
-The next question is how much latency does logging add to your main thread?
-
-```
-Benchmark                                     Mode  Cnt       Score       Error  Units
-AsyncEntryWriterBenchmark.benchmark           avgt   10      11.920 ±     0.099  ns/op
-BlockingEntryWriterBenchmark.benchmark        avgt   10       1.057 ±     0.010  ns/op
-```
-
-The async entry writer takes 11 nanoseconds to add the entry to the queue so that the background thread can write it.  The blocking entry writer (not used by the appender) takes 1 nanosecond, but then the SQLite write itself must be added onto that, which is roughly between 1k - 3k nanoseconds, depending on batch commits.
-
-Because the async entry writer takes 11 nanoseconds and SQLite writes are batched on another thread, the functional impact to the application is roughly the same as writing to a memory mapped file, with the benefit of having a searchable database at the end of it.
-
-Finally, there's the cost of archiving data using a zstandard codec.
-
-```
-Benchmark                                     Mode  Cnt       Score       Error  Units
-codec.zstd.ZstdCodecBenchmark.benchmark       avgt   20    4431.193 ±    17.608  ns/op
-codec.zstd.ZstdDictCodecBenchmark.testWrite   avgt   20    3079.556 ±   226.191  ns/op
-```
-
-Compressing a log entry with ZStandard with a compression level of `3` takes around 4 microseconds.  Once a dictionary is trained, it takes 3 microseconds and yields much better [compression results](COMPRESSION.md).
+See [BENCHMARKS.md](BENCHMARKS.md)
 
 ### Improvements using tmpfs
 
