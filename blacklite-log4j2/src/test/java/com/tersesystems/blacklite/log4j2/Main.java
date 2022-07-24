@@ -14,7 +14,7 @@ public class Main {
     for (int f = 0; f < 100; f++) {
       // System.out.println("Going to sleep for 100L, f = " + f);
       Thread.sleep(100L);
-      System.out.println("Okay I'm back");
+      // System.out.println("Okay I'm back");
       for (int i = 0; i < 1000; i++) {
         logger.debug("debugging is fun!!! {}", Instant.now());
       }

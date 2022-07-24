@@ -2,6 +2,7 @@ package com.tersesystems.blacklite.log4j2;
 
 import static java.util.Objects.requireNonNull;
 
+import com.tersesystems.blacklite.archive.Archiver;
 import com.tersesystems.blacklite.archive.RollingArchiver;
 import com.tersesystems.blacklite.archive.RollingStrategy;
 import com.tersesystems.blacklite.archive.TriggeringPolicy;
@@ -14,10 +15,10 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 
-@Plugin(name = "Archiver", category = Core.CATEGORY_NAME, printObject = true)
-public class Log4J2Archiver extends RollingArchiver {
+@Plugin(name = "RollingArchiver", category = Core.CATEGORY_NAME, printObject = true)
+public class Log4J2RollingArchiver extends RollingArchiver implements Archiver {
 
-  Log4J2Archiver(
+  Log4J2RollingArchiver(
       String file,
       long maximumNumRows,
       Codec codec,
@@ -32,12 +33,12 @@ public class Log4J2Archiver extends RollingArchiver {
   }
 
   @PluginFactory
-  public static Log4J2Archiver createArchiver(
+  public static RollingArchiver createArchiver(
       @PluginAttribute("file") @Required(message = "No file provided for Archiver") String file,
       @PluginAttribute(value = "maximumNumRows", defaultInt = 10000) long maximumNumRows,
       @PluginElement("codec") Codec codec,
       @PluginElement("rollingStrategy") RollingStrategy rollingStrategy,
       @PluginElement("triggeringPolicy") TriggeringPolicy triggeringPolicy) {
-    return new Log4J2Archiver(file, maximumNumRows, codec, rollingStrategy, triggeringPolicy);
+    return new Log4J2RollingArchiver(file, maximumNumRows, codec, rollingStrategy, triggeringPolicy);
   }
 }

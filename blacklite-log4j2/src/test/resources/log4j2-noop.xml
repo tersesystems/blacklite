@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="DEBUG" packages="com.tersesystems.blacklite.log4j2">
+    <appenders>
+        <Blacklite name="Blacklite" file="/${sys:java.io.tmpdir}/blacklite-log4j2/live.db">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+            <NoOpArchiver/>
+        </Blacklite>
+    </appenders>
+    <Loggers>
+        <Root level="DEBUG">
+            <AppenderRef ref="Blacklite"/>
+        </Root>
+    </Loggers>
+</Configuration>
