@@ -33,7 +33,7 @@ public class Log4J2RollingArchiver extends RollingArchiver implements Archiver {
   }
 
   @PluginFactory
-  public static Log4J2RollingArchiver createArchiver(
+  public static RollingArchiver createArchiver(
       @PluginAttribute("file") @Required(message = "No file provided for Archiver") String file,
       @PluginAttribute(value = "maximumNumRows", defaultInt = 10000) long maximumNumRows,
       @PluginElement("codec") Codec codec,

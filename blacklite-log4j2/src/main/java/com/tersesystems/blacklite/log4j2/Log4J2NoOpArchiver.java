@@ -14,7 +14,7 @@ public class Log4J2NoOpArchiver extends NoOpArchiver implements Archiver {
   }
 
   @PluginFactory
-  public static Log4J2NoOpArchiver createArchiver() {
+  public static NoOpArchiver createArchiver() {
     return new Log4J2NoOpArchiver();
   }
 }

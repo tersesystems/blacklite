@@ -372,7 +372,7 @@ The Log4J 2 is similar to the Logback appender:
                    eventTemplateUri="classpath:LogstashJsonEventLayoutV1.json"
                    prettyPrintEnabled="false"/>
 
-   <Archiver file="/${sys:java.io.tmpdir}/blacklite-log4j2-zstd/archive.db">
+   <RollingArchiver file="/${sys:java.io.tmpdir}/blacklite-log4j2-zstd/archive.db">
     <!--<ZStdCodec level="3"/>-->
     <ZStdDictCodec>
      <level>3</level>
@@ -389,7 +389,7 @@ The Log4J 2 is similar to the Logback appender:
     <RowBasedTriggeringPolicy>
      <maximumNumRows>500000</maximumNumRows>
     </RowBasedTriggeringPolicy>
-   </Archiver>
+   </RollingArchiver>
   </Blacklite>
  </appenders>
  <Loggers>
@@ -402,13 +402,59 @@ The Log4J 2 is similar to the Logback appender:
 
 It is broadly similar to the Logback system, with the same settings. .
 
+#### NoOpArchiver
+
+The no-op archiver does nothing:
+
+```xml
+<NoOpArchiver/>
+```
+
+#### DeletingArchiver
+
+The deleting archiver will delete all rows greater than the `archiveAfterRows` property:
+
+```xml
+<DeletingArchiver archiveAfterRows="100">
+  <RowBasedTriggeringPolicy>
+    <maximumNumRows>100</maximumNumRows>
+  </RowBasedTriggeringPolicy>
+</DeletingArchiver>
+```
+
+#### RollingArchiver
+
+The rolling archiver is as follows:
+
+```xml
+<RollingArchiver file="${sys:java.io.tmpdir}/blacklite-log4j2/archive.db" archiveAfterRows="10000">
+ <!-- rolling strategy -->
+ <!-- triggering policy -->
+</RollingArchiver>
+```
+
+##### Fixed Window Rolling Strategy
+
+The fixed window rolling strategy is as follows:
+
+```xml
+<FixedWindowRollingStrategy
+            min="1"
+            max="5"
+            filePattern="${sys:java.io.tmpdir}/blacklite-log4j2-zstd/archive-%i.db"/>
+```
+
+There is no time based rolling strategy for Log4J2 at this time: I don't understand how to extract the functionality and make it available.
+
 ## Benchmarks
 
 See [BENCHMARKS.md](BENCHMARKS.md)
 
-### Improvements using tmpfs
+The TL;DR is that you can do a sustained 927 ops/ms of small entries on an SQLite instance mounted on a `tmpfs` filesystem, subject to your logging framework, encoding, etc.  The appender will happily accept bursts of logging to the queue, and will drain from queue and insert into the database in batches.
 
-You can improve Blacklite performance even further if you are willing to use a `tmpfs` filesystem as a backing store.  This is a tactic used by [Alluxio](https://github.com/Alluxio/alluxio/blob/master/core/server/worker/src/main/java/alluxio/worker/block/meta/StorageTier.java#L141), for example.
+## Setting up tmpfs
+
+In cases where you want to use Blacklite as a persistent ring buffer, using a `tmpfs` filesystem as a backing store is a great way to avoid fsync.  This is a tactic used by [Alluxio](https://github.com/Alluxio/alluxio/blob/master/core/server/worker/src/main/java/alluxio/worker/block/meta/StorageTier.java#L141), for example.
 
 The easiest thing to do is to set up `/var/log` as [tmpfs](
 https://forums.gentoo.org/viewtopic-t-371889-start-0-postdays-0-postorder-asc-highlight-tmpfs.html?sid=13bc57e79de631391821d1869615eb45) and go from there.
