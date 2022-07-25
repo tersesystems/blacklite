@@ -17,7 +17,7 @@ Blacklite is an appender that is intended for cases where you need a [ring buffe
 
 Blacklite provides this functionality by writing to a [SQLite](https://www.sqlite.org/index.html) database, configured for writes at speeds **roughly equivalent to an in-memory ring buffer** by using [memory mapping](https://www.sqlite.org/mmap.html) and [write ahead logging](https://sqlite.org/wal.html).
 
-Practically speaking, with some decent hardware you can budget around 800 debugging statements per 1 ms request -- see benchmarks.  Using [conditional logging](https://github.com/tersesystems/echopraxia#why-conditions), you can turn on debug logging in production and get a complete picture of what a single request is doing.  See [echopraxia-examples](https://github.com/tersesystems/echopraxia-examples) and [terse-logback-showcase](https://github.com/tersesystems/terse-logback-showcase) for a live demonstration.
+Practically speaking, with some decent hardware you can budget around 800 debugging statements per 1 ms request -- see [benchmarks](BENCHMARKS.md).  Using [conditional logging](https://github.com/tersesystems/echopraxia#why-conditions), you can turn on debug logging in production and get a complete picture of what a single request is doing.  See [echopraxia-examples](https://github.com/tersesystems/echopraxia-examples) and [terse-logback-showcase](https://github.com/tersesystems/terse-logback-showcase) for a live demonstration.
 
 Blog post [here](https://tersesystems.com/blog/2020/11/26/queryable-logging-with-blacklite/).
 
@@ -450,7 +450,11 @@ There is no time based rolling strategy for Log4J2 at this time: I don't underst
 
 See [BENCHMARKS.md](BENCHMARKS.md)
 
-The TL;DR is that you can do a sustained 927 ops/ms of small entries on an SQLite instance mounted on a `tmpfs` filesystem, subject to your logging framework, encoding, etc.  The appender will happily accept bursts of logging to the queue, and will drain from queue and insert into the database in batches.
+Logging takes between 25 and 60 ns to enter the in-memory queue, depending on the queue size.  The appender will happily accept bursts of logging to the queue, and will drain from queue and insert into the database in batches.  Note that queue is unbounded, so there is no point at which the appender will drop logging events: you can add a [budget filter](https://tersesystems.github.io/terse-logback/1.0.0/guide/budget/) to impose a limit on the number of entries logged.
+
+On the backend, the SQLite consumer is single threaded, and can sustain ~2 us/op of small entries using batched commits with an SQLite instance mounted on a `tmpfs` filesystem.  For comparison, using Logback with a file appender with `immediateFlush=false` is between [636 and 850 ns/op](https://github.com/wsargent/slf4j-benchmark) but lacks the row-based truncation, querying, indexing, and backup that come with SQLite.
+
+All of this is of course subject to your encoding, your logging framework, and your specific hardware.
 
 ## Setting up tmpfs
 
