@@ -9,8 +9,8 @@ import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 
-@BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 10, time = 1)
 @Measurement(iterations = 20, time = 1)
 @Fork(3)
@@ -23,7 +23,6 @@ public class DefaultEntryStoreBenchmark {
   byte[] content = "Hello World!".getBytes();
   int level = 5000;
   Path tempDirectoryPath;
-  Connection conn;
 
   private int inserts = 0;
 
@@ -46,7 +45,7 @@ public class DefaultEntryStoreBenchmark {
   }
 
   @Benchmark
-  public void insertAndBatchCommit() throws SQLException {
+  public void insertAndBatch1000Commit() throws SQLException {
     repository.insert(now.getEpochSecond(), now.getNano(), level, content);
     inserts += 1;
     if (inserts == 1000) {
@@ -57,7 +56,19 @@ public class DefaultEntryStoreBenchmark {
   }
 
   @Benchmark
-  public void insertAndCommit() throws SQLException {
+  public void insertAndBatch100KCommit() throws SQLException {
+    repository.insert(now.getEpochSecond(), now.getNano(), level, content);
+    inserts += 1;
+    // https://avi.im/blag/2021/fast-sqlite-inserts/ says 100K is the sweet spot
+    if (inserts == 100_000) {
+      repository.executeBatch();
+      repository.commit();
+      inserts = 0;
+    }
+  }
+
+  @Benchmark
+  public void insertAnd1Commit() throws SQLException {
     repository.insert(now.getEpochSecond(), now.getNano(), level, content);
     repository.executeBatch();
     repository.commit();
