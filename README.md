@@ -42,6 +42,8 @@ The `content` column contains the log entry itself, as bytes.  The only other co
 are no indexes or autoincrement field.  Logs stored in Blacklite are the same size as raw files.  In addition, using
 SQLite file means [total compatibility](https://sqlite.org/locrsf.html) and support over all platforms.
 
+The appender incorporates a queue that is bound by default to a maximum capacity of 1,048,576 entries: you can add a [budget filter](https://tersesystems.github.io/terse-logback/1.0.0/guide/budget/) to impose a limit on the number of entries logged in a duration.  The queue must be bounded because if the filesystem fails completely e.g. there is no space left on the device, the queue cannot be left to fill indefinitely and must error out at some point.
+
 ## Archiving and Compression
 
 In addition, there are a number of features that Blacklite has above and beyond raw append speed:
@@ -452,7 +454,7 @@ There is no time based rolling strategy for Log4J2 at this time: I don't underst
 
 See [BENCHMARKS.md](BENCHMARKS.md)
 
-Logging takes between 25 and 60 ns to enter the in-memory queue, depending on the queue size.  The appender will happily accept bursts of logging to the queue, and will drain from queue and insert into the database in batches.  Note that queue is unbounded, so there is no point at which the appender will drop logging events: you can add a [budget filter](https://tersesystems.github.io/terse-logback/1.0.0/guide/budget/) to impose a limit on the number of entries logged.
+Logging takes between 25 and 60 ns to enter the in-memory queue, depending on the queue size.  The appender will happily accept bursts of logging to the queue, and will drain from queue and insert into the database in batches.
 
 On the backend, the SQLite consumer is single threaded, and can sustain ~2 us/op of small entries using batched commits with an SQLite instance mounted on a `tmpfs` filesystem.  For comparison, using Logback with a file appender with `immediateFlush=false` is between [636 and 850 ns/op](https://github.com/wsargent/slf4j-benchmark) but lacks the row-based truncation, querying, indexing, and backup that come with SQLite.
 

@@ -15,6 +15,10 @@ public interface EntryStoreConfig {
 
   void setBatchInsertSize(int batchInsertSize);
 
+  int getMaxCapacity();
+
+  void setMaxCapacity(int maxCapacity);
+
   boolean getTracing();
 
   void setTracing(boolean tracing);

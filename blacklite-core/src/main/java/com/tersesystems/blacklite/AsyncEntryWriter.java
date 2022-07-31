@@ -3,7 +3,7 @@ package com.tersesystems.blacklite;
 import com.tersesystems.blacklite.archive.ArchiveResult;
 import com.tersesystems.blacklite.archive.Archiver;
 import org.jctools.queues.MessagePassingQueue;
-import org.jctools.queues.MpscUnboundedXaddArrayQueue;
+import org.jctools.queues.MpscGrowableArrayQueue;
 
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
@@ -32,11 +32,8 @@ import java.util.concurrent.locks.LockSupport;
 public class AsyncEntryWriter extends AbstractEntryWriter {
 
   protected final ExecutorService executor;
-
   private final MessagePassingQueue<Entry> queue;
-
   private final boolean tracing;
-
   private boolean archiving = false;
 
   public AsyncEntryWriter(
@@ -46,11 +43,7 @@ public class AsyncEntryWriter extends AbstractEntryWriter {
 
     this.tracing = config.getTracing();
 
-    // https://vmlens.com/articles/scale/scalability_queue/
-    // https://twitter.com/forked_franz/status/1228773808317792256?lang=en
-    // XXX should talk to @forked_franz about ideal chunk size?
-    this.queue = new MpscUnboundedXaddArrayQueue<>(4096);
-    // queue = new MpscArrayQueue<>(65536);
+    this.queue = new MpscGrowableArrayQueue<>(config.getMaxCapacity());
 
     this.executor =
       Executors.newSingleThreadExecutor(
