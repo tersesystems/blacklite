@@ -21,7 +21,10 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   private Archiver archiver;
   private String file;
   private Properties properties;
-  private int batchInsertSize;
+  private int batchInsertSize = DefaultEntryStoreConfig.BATCH_INSERT_SIZE;
+
+  private int maxCapacity = DefaultEntryStoreConfig.MAX_CAPACITY;
+
   private boolean tracing = false;
 
   public Encoder<ILoggingEvent> getEncoder() {
@@ -44,6 +47,7 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
       config.setBatchInsertSize(batchInsertSize);
       config.setFile(file);
       config.setTracing(tracing);
+      config.setMaxCapacity(maxCapacity);
       if (properties != null) {
         config.setProperties(properties);
       }
@@ -116,6 +120,16 @@ public class BlackliteAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
   @Override
   public void setBatchInsertSize(int batchInsertSize) {
     this.batchInsertSize = batchInsertSize;
+  }
+
+  @Override
+  public int getMaxCapacity() {
+    return this.maxCapacity;
+  }
+
+  @Override
+  public void setMaxCapacity(int maxCapacity) {
+    this.maxCapacity = maxCapacity;
   }
 
   public boolean getTracing() {

@@ -6,13 +6,17 @@ import java.util.Properties;
 import org.sqlite.SQLiteConfig;
 
 public class DefaultEntryStoreConfig implements EntryStoreConfig {
+  public static final int MAX_CAPACITY = 1048576;
+  public static final int BATCH_INSERT_SIZE = 1000;
 
   private static final Properties defaults = liveConfig().toProperties();
 
   private String file;
   private Properties properties = new Properties(defaults);
-  private int batchInsertSize = 1000;
+  private int batchInsertSize = BATCH_INSERT_SIZE;
   private boolean tracing = false;
+
+  private int maxCapacity = MAX_CAPACITY;
 
   @Override
   public String getFile() {
@@ -45,6 +49,16 @@ public class DefaultEntryStoreConfig implements EntryStoreConfig {
   @Override
   public void setBatchInsertSize(int batchInsertSize) {
     this.batchInsertSize = batchInsertSize;
+  }
+
+  @Override
+  public int getMaxCapacity() {
+    return this.maxCapacity;
+  }
+
+  @Override
+  public void setMaxCapacity(int maxCapacity) {
+    this.maxCapacity = maxCapacity;
   }
 
   @Override

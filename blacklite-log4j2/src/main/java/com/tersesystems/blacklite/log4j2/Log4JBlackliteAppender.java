@@ -47,7 +47,8 @@ public class Log4JBlackliteAppender extends AbstractAppender {
       @PluginAttribute("name") @Required(message = "No name provided for BlackliteAppender")
           final String name,
       @PluginAttribute("file") final String file,
-      @PluginAttribute(value = "batchInsertSize", defaultInt = 1000) final int batchInsertSize,
+      @PluginAttribute(value = "batchInsertSize", defaultInt = DefaultEntryStoreConfig.BATCH_INSERT_SIZE) final int batchInsertSize,
+      @PluginAttribute(value = "maxCapacity", defaultInt = DefaultEntryStoreConfig.MAX_CAPACITY) final int maxCapacity,
       @PluginElement("archiver") final Archiver archiver,
       @PluginElement("layout") final Layout<? extends Serializable> layout,
       @PluginElement("filter") final Filter filter)
@@ -66,6 +67,7 @@ public class Log4JBlackliteAppender extends AbstractAppender {
 
     config.setFile(file);
     config.setBatchInsertSize(batchInsertSize);
+    config.setMaxCapacity(maxCapacity);
     //config.setProperties(additionalProperties);
     LOGGER.info("Connecting with config " + config);
 

@@ -20,7 +20,7 @@ public class AsyncEntryWriterBenchmark {
   Instant now = Instant.now();
   byte[] content = "Hello World!".getBytes();
   int level = 5000;
-  private AsyncEntryWriter blacklite;
+  private AsyncEntryWriter writer;
 
   static class FakeEntryStore implements EntryStore {
     @Override
@@ -60,7 +60,7 @@ public class AsyncEntryWriterBenchmark {
     EntryStoreConfig config = new DefaultEntryStoreConfig();
     final FakeEntryStore fakeEntryStore = new FakeEntryStore();
     Archiver archiver = new NoOpArchiver();
-    this.blacklite =
+    this.writer =
         new AsyncEntryWriter(StatusReporter.DEFAULT, config, archiver, "blacklite-appender") {
           @Override
           protected EntryStore createEntryStore(EntryStoreConfig config) throws SQLException {
@@ -71,7 +71,7 @@ public class AsyncEntryWriterBenchmark {
 
   @TearDown
   public void tearDown() throws Exception {
-    blacklite.close();
+    writer.close();
   }
 
   // Dell XPS Laptop running Elementary 5.1.7
@@ -82,6 +82,6 @@ public class AsyncEntryWriterBenchmark {
 
   @Benchmark
   public void benchmark() throws SQLException {
-    blacklite.write(now.getEpochSecond(), now.getNano(), level, content);
+    writer.write(now.getEpochSecond(), now.getNano(), level, content);
   }
 }
