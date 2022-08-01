@@ -462,7 +462,7 @@ All of this is of course subject to your encoding, your logging framework, and y
 
 ## Setting up tmpfs
 
-In cases where you want to use Blacklite as a persistent ring buffer, using a `tmpfs` filesystem as a backing store is a great way to avoid fsync.  This is a tactic used by [Alluxio](https://github.com/Alluxio/alluxio/blob/master/core/server/worker/src/main/java/alluxio/worker/block/meta/StorageTier.java#L141), for example.
+In cases where you want to use Blacklite as a persistent ring buffer, using a `tmpfs` filesystem as a backing store is a great way to avoid fsync.  This is a tactic used by [Alluxio](https://github.com/Alluxio/alluxio/blob/master/core/common/src/main/java/alluxio/worker/block/meta/StorageTier.java#L141), for example.
 
 The easiest thing to do is to set up `/var/log` as [tmpfs](
 https://forums.gentoo.org/viewtopic-t-371889-start-0-postdays-0-postorder-asc-highlight-tmpfs.html?sid=13bc57e79de631391821d1869615eb45) and go from there.
