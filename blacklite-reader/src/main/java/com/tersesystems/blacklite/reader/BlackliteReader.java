@@ -256,7 +256,8 @@ public class BlackliteReader implements Runnable {
   protected boolean isDatabase(File dictFile) {
     try (InputStream inputStream = Files.newInputStream(dictFile.toPath())) {
       // https://sqlite.org/fileformat.html
-      final byte[] bytes = inputStream.readNBytes(15);
+      final byte[] bytes = new byte[15];
+      inputStream.read(bytes);
       final byte[] magicBytes = "SQLite format 3".getBytes(StandardCharsets.UTF_8);
       return Arrays.equals(bytes, magicBytes);
     } catch (IOException e) {

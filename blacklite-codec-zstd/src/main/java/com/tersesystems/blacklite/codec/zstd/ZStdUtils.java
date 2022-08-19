@@ -36,7 +36,8 @@ public final class ZStdUtils {
 
   public static boolean isDictionary(File dictFile) throws IOException {
     try (InputStream in = Files.newInputStream(dictFile.toPath())) {
-      final byte[] bytes = in.readNBytes(4);
+      final byte[] bytes = new byte[4];
+      in.read(bytes);
 
       return Arrays.equals(bytes, ZSTD_DICT_MAGIC_NUMBER);
     }

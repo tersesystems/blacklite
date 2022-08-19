@@ -30,8 +30,7 @@ public class QueryBuilderTest {
     EntryStoreConfig config = new DefaultEntryStoreConfig();
     config.setFile(archivePath.toString());
     config.setBatchInsertSize(1); // don't batch inserts here.
-    EntryStore entryStore = new DefaultEntryStore(config);
-    try (entryStore) {
+    try (EntryStore entryStore = new DefaultEntryStore(config)) {
       entryStore.initialize();
     }
   }

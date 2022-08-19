@@ -59,8 +59,7 @@ public class CompressDatabase implements Runnable {
         codec.initialize(reporter);
         registerCodecFunction(c, codec);
 
-        Statement statement = c.createStatement();
-        try (statement) {
+        try (Statement statement = c.createStatement()) {
           String attachName = "blacklite_zstd";
           final String attachStatement = getAttachStatement(dest.toAbsolutePath(), attachName);
           System.out.println("attachStatement = " + attachStatement);
@@ -99,13 +98,11 @@ public class CompressDatabase implements Runnable {
     EntryStoreConfig config = new DefaultEntryStoreConfig();
     config.setFile(dest.toAbsolutePath().toString());
     config.setBatchInsertSize(1); // don't batch inserts here.
-    EntryStore entryStore = new DefaultEntryStore(config);
-    try (entryStore) {
+    try (EntryStore entryStore = new DefaultEntryStore(config)) {
       entryStore.initialize();
     }
 
-    final ZStdDictSqliteRepository repository = new ZStdDictSqliteRepository();
-    try (repository) {
+    try (ZStdDictSqliteRepository repository = new ZStdDictSqliteRepository()) {
       repository.setFile(dest.toFile().getAbsolutePath());
       repository.initialize();
     }

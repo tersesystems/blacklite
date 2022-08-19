@@ -74,7 +74,7 @@ public class ZStdDictCodec implements Codec {
     } else {
       // XXX should cache this so we don't have to do look up repeatedly
       final Optional<ZStdDict> lookup = repository.lookup(dictIdFromDict);
-      if (lookup.isEmpty()) {
+      if (! lookup.isPresent()) {
         throw new NoDictionaryFoundException("No dictionary found for dictId", dictIdFromDict);
       }
       final ZStdDict zstdDict = lookup.get();
