@@ -22,6 +22,12 @@ subprojects { subproj ->
     apply plugin: 'java-library'
     apply plugin: 'com.diffplug.spotless'
 
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
+    }
+
     repositories {
         //mavenLocal()
         mavenCentral()
