@@ -23,6 +23,7 @@ gradle-app.setting
 .settings
 **/bin/
 
+.DS_Store
 .letta/
 
 __pycache__/
