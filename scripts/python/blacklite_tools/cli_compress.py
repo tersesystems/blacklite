@@ -53,7 +53,9 @@ def main(source, dest, dict):
 
     def compress(s):
         """UDF for compressing content."""
-        return cctx.compress(bytes(s, "utf8"))
+        if isinstance(s, str):
+            return cctx.compress(bytes(s, "utf8"))
+        return cctx.compress(s)
 
     db.register_function(compress)
 

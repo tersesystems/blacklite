@@ -22,3 +22,7 @@ gradle-app.setting
 .project
 .settings
 **/bin/
+
+.letta/
+
+__pycache__/
