@@ -1,6 +1,6 @@
 plugins {
-    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
-    id 'com.diffplug.spotless'  version '6.8.0'
+    id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
+    id 'com.diffplug.spotless'  version '8.1.0'
     id "maven-publish"
 }
 
@@ -38,6 +38,7 @@ subprojects { subproj ->
         testImplementation 'org.assertj:assertj-core:3.13.2'
         testImplementation "org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion"
         testImplementation "org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion"
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
         //testCompile group: 'org.junit.platform', name: 'junit-platform-runner', version: '1.5.0'
     }
 

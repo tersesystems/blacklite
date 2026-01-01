@@ -10,3 +10,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.vlkan.log4j2/log4j2-logstash-layout
     testImplementation group: 'com.vlkan.log4j2', name: 'log4j2-logstash-layout', version: '1.0.5'
 }
+
+test {
+    failOnNoDiscoveredTests = false
+}
