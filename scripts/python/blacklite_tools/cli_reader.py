@@ -11,7 +11,7 @@ from .database import create_codec
 
 
 @click.command()
-@click.argument("dbpath", default="../data/blacklite.db")
+@click.argument("dbpath", default="./tests/fixtures/uncompressed.db")
 def main(dbpath):
     """Read data from blacklite database using appropriate codec.
 

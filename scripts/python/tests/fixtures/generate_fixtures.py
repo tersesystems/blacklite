@@ -26,9 +26,13 @@ def create_uncompressed_db():
 
     # Insert 100 sample log entries
     epoch = int(time.time()) - 3600  # 1 hour ago
+    
+    # Use a long repetitive string to ensure good compression ratios
+    padding = "The quick brown fox jumps over the lazy dog. " * 10
+    
     for i in range(100):
         content = json.dumps({
-            "message": f"Test log message number {i}",
+            "message": f"Test log message number {i}. {padding}",
             "logger": "test.logger",
             "thread": "main"
         })
@@ -60,9 +64,13 @@ def create_compressed_db():
 
     # Insert 100 compressed sample log entries
     epoch = int(time.time()) - 3600
+    
+    # Use a long repetitive string to ensure good compression ratios
+    padding = "The quick brown fox jumps over the lazy dog. " * 10
+    
     for i in range(100):
         content = json.dumps({
-            "message": f"Test log message number {i}",
+            "message": f"Test log message number {i}. {padding}",
             "logger": "test.logger",
             "thread": "main"
         })
@@ -99,9 +107,13 @@ def create_compressed_dict_db():
 
     # Train dictionary from sample data
     samples = []
+    
+    # Use a long repetitive string to ensure good compression ratios
+    padding = "The quick brown fox jumps over the lazy dog. " * 10
+    
     for i in range(1000):
         content = json.dumps({
-            "message": f"Test log message number {i}",
+            "message": f"Test log message number {i}. {padding}",
             "logger": "test.logger",
             "thread": "main"
         })
@@ -118,9 +130,13 @@ def create_compressed_dict_db():
     # Insert compressed entries using dictionary
     cctx = zstd.ZstdCompressor(dict_data=dict_data)
     epoch = int(time.time()) - 3600
+    
+    # Use a long repetitive string to ensure good compression ratios
+    padding = "The quick brown fox jumps over the lazy dog. " * 10
+    
     for i in range(100):
         content = json.dumps({
-            "message": f"Test log message number {i}",
+            "message": f"Test log message number {i}. {padding}",
             "logger": "test.logger",
             "thread": "main"
         })

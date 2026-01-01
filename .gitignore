@@ -22,3 +22,8 @@ gradle-app.setting
 .project
 .settings
 **/bin/
+
+.DS_Store
+.letta/
+
+__pycache__/
