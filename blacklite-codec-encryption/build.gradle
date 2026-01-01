@@ -1,0 +1,14 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+dependencies {
+    api project(':blacklite-api')
+
+    // No external dependencies - Java 8 standard library only
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation project(':blacklite-core')
+}
