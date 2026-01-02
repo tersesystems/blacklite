@@ -42,4 +42,24 @@ public class EncryptionMetadataTest {
     assertThat(wrapped.isKeyWrapped()).isTrue();
     assertThat(unwrapped.isKeyWrapped()).isFalse();
   }
+
+  @Test
+  public void testEncryptedKeyDefensivelyCopied() {
+    byte[] key = new byte[] {1, 2, 3, 4};
+    EncryptionMetadata metadata =
+        new EncryptionMetadata(1, "AES-GCM-256", key, null, null, 123456L);
+
+    // Mutate original array
+    key[0] = 99;
+
+    // Metadata should be unchanged
+    assertThat(metadata.getEncryptedKey()[0]).isEqualTo((byte) 1);
+
+    // Mutate returned array
+    byte[] retrieved = metadata.getEncryptedKey();
+    retrieved[1] = 88;
+
+    // Subsequent retrieval should be unchanged
+    assertThat(metadata.getEncryptedKey()[1]).isEqualTo((byte) 2);
+  }
 }

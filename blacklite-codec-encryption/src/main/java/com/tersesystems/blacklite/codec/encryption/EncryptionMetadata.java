@@ -19,7 +19,7 @@ public class EncryptionMetadata {
       long createdAt) {
     this.id = id;
     this.algorithm = algorithm;
-    this.encryptedKey = encryptedKey;
+    this.encryptedKey = encryptedKey != null ? encryptedKey.clone() : null;
     this.keyEncryptionAlgorithm = keyEncryptionAlgorithm;
     this.keyEncryptionComment = keyEncryptionComment;
     this.createdAt = createdAt;
@@ -34,7 +34,7 @@ public class EncryptionMetadata {
   }
 
   public byte[] getEncryptedKey() {
-    return encryptedKey;
+    return encryptedKey != null ? encryptedKey.clone() : null;
   }
 
   public String getKeyEncryptionAlgorithm() {
